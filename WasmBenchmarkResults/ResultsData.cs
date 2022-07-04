@@ -60,6 +60,7 @@ namespace WasmBenchmarkResults
     internal class ResultsData
     {
         public Dictionary<string, FlavorData> results = new Dictionary<string, FlavorData>();
+        public string baseDirectory;
     }
 }
 

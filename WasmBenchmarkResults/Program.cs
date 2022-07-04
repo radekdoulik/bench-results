@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace WasmBenchmarkResults
@@ -18,9 +19,10 @@ namespace WasmBenchmarkResults
 
         void Run()
         {
-            FindResults(".");
+            FindResults("measurements");
             foreach (string flavor in flavors)
-                ExportCSV($"results.{flavor}.csv", flavor);
+                ExportCSV($"csv/results.{flavor}.csv", flavor);
+            GenerateReadme();
         }
 
         string[] Builds = { "aot", "interp" };
@@ -48,7 +50,7 @@ namespace WasmBenchmarkResults
                                 rd = timedPaths[data.commitTime];
                             else
                             {
-                                rd = new ResultsData();
+                                rd = new ResultsData { baseDirectory = dir };
                                 timedPaths[data.commitTime] = rd;
                             }
 
@@ -99,6 +101,33 @@ namespace WasmBenchmarkResults
                 }
 
                 sw.Close();
+            }
+        }
+
+        string ReadmeLine (KeyValuePair<DateTimeOffset, ResultsData> pair)
+        {
+            StringBuilder sb = new();
+
+            var dir = Path.GetFileName(pair.Value.baseDirectory);
+            sb.Append($"{pair.Key.ToString("d")} - [{dir.Substring(0, 7)}](https://github.com/dotnet/runtime/commit/{dir})");
+            foreach (var fd in pair.Value.results)
+                sb.Append($" :: [{fd.Key}]({fd.Value.runPath.Replace(@".\", "").Replace(@"\", "/")})");
+
+            sb.AppendLine();
+
+            return sb.ToString();
+        }
+
+
+        void GenerateReadme()
+        {
+            var intro = File.ReadAllText("README.md.in");
+            using (var sw = new StreamWriter("README.md"))
+            {
+                sw.Write(intro);
+
+                foreach (var res in timedPaths.Reverse())
+                    sw.WriteLine (ReadmeLine(res));
             }
         }
     }
