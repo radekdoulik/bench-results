@@ -17,15 +17,19 @@ namespace WasmBenchmarkResults
         }
     }
 
-    internal class ResultsData
+    internal class FlavorData
     {
-        public string runPath;
         public DateTimeOffset commitTime;
+        public string runPath;
+        public string flavor;
         public JsonResultsData results;
 
-        public ResultsData(string path)
+        public HashSet<string> MeasurementLabels => results.minTimes.Keys.ToHashSet<string>();
+
+        public FlavorData(string path, string flavor)
         {
             runPath = path;
+            this.flavor = flavor;
             results = JsonResultsData.Load(Path.Combine(path, "results.json"));
             commitTime = LoadGitLog(Path.Combine(path, "git-log.txt"));
         }
@@ -51,8 +55,11 @@ namespace WasmBenchmarkResults
 
             throw new InvalidDataException("unable to load git log data");
         }
+    }
 
-        public HashSet<string> MeasurementLabels => results.minTimes.Keys.ToHashSet<string>();
+    internal class ResultsData
+    {
+        public Dictionary<string, FlavorData> results = new Dictionary<string, FlavorData>();
     }
 }
 
