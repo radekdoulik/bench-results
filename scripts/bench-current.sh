@@ -154,9 +154,10 @@ run_sample interp/default/chrome chrome chromium
 run_sample interp/default/firefox firefox firefox
 
 cd $RESULTS_DIR/../..
+find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
 DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
 cd $RESULTS_DIR
-git add . ../../README.md ../../csv
+git add . ../../README.md ../../csv ../jsonDataFiles.txt
 echo Adding commit for: $LOG_HASH_DATE
 git commit -m "Add results for: $LOG_HASH_DATE"
 
