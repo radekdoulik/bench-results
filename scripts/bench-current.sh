@@ -38,6 +38,7 @@ prepare_tree() {
         git checkout `git rev-list -n 1 --before="$1 23:59:59" main`
         if ! grep results.json src/mono/sample/wasm/browser-bench/main.js
         then
+            echo browser-bench too old, using replacement
             mv src/mono/sample/wasm/browser-bench src/mono/sample/wasm/browser-bench-bak
             rm -rf src/mono/sample/wasm/browser-bench
             cp -r ~/git/browser-bench src/mono/sample/wasm/
@@ -59,6 +60,16 @@ prepare_environment() {
     echo Prepare build of $HASH
     RESULTS_DIR=~/WasmPerformanceMeasurements/measurements/$HASH
     mkdir -p $RESULTS_DIR
+    cd $RESULTS_DIR
+    uname -a > system.txt
+    echo === outpuf of: free > hw-info.txt
+    free >> hw-info.txt
+    echo === outpuf of: cat /proc/meminfo >> hw-info.txt
+    cat /proc/meminfo >> hw-info.txt
+    echo === outpuf of: cat /proc/cpuinfo >> hw-info.txt
+    cat /proc/cpuinfo >> hw-info.txt
+    cp ~/git/runtime/src/mono/wasm/emscripten-version.txt .
+    cd -
 
     echo Copy libclang
     mkdir -p artifacts/obj/mono/Browser.wasm.Release/cross/llvm/lib
@@ -168,6 +179,7 @@ cd $RESULTS_DIR/../..
 find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
 DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
 cd $RESULTS_DIR
+
 git add . ../../README.md ../../csv ../jsonDataFiles.txt
 echo Adding commit for: $LOG_HASH_DATE
 git commit -m "Add results for: $LOG_HASH_DATE"
