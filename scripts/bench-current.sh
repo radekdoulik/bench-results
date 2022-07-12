@@ -14,8 +14,19 @@ clean_environment()
 }
 
 prepare_tree() {
+    rm -rf src/mono/wasm/emsdk
     git clean -xfd
     git stash
+
+    if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.12" ]
+    then
+	echo Using 3.1.13 emscripten instead of 3.1.12 - which is not available on arm64 linux
+	echo -n 3.1.13 > src/mono/wasm/emscripten-version.txt
+    fi
+
+    cd src/mono/wasm
+    make provision-wasm
+    cd -
 
     if [ $# -gt 0 ]
     then
