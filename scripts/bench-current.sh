@@ -69,6 +69,8 @@ prepare_environment() {
     echo === outpuf of: cat /proc/cpuinfo >> hw-info.txt
     cat /proc/cpuinfo >> hw-info.txt
     cp ~/git/runtime/src/mono/wasm/emscripten-version.txt .
+    chromium --version 2>&1| tail -1 >> versions.txt
+    firefox --version 2>&1| tail -1 >> versions.txt
     cd -
 
     echo Copy libclang
