@@ -49,6 +49,8 @@ prepare_tree() {
     make provision-wasm
     cd -
 
+    git apply ../runtime.patch
+
     rm -rf artifacts
 }
 
