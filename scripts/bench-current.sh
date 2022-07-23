@@ -101,12 +101,12 @@ build_runtime() {
     done
 }
 
-build_sample_interp() {
-    echo Build bench sample for interp
+build_sample() {
+    echo Build bench sample with additional params: $@
     cd ~/git/runtime
     rm -rf artifacts/obj/mono/Wasm.Browser.Bench.Sample
     rm -rf src/mono/sample/wasm/browser-bench/bin
-    ./dotnet.sh build -c Release /t:BuildSampleInTree -p:RunAOTCompilation=false src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
+    ./dotnet.sh build -c Release /t:BuildSampleInTree $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
 }
 
 run_sample_start() {
@@ -121,7 +121,7 @@ run_sample_start() {
 
     echo Run bench
     cd ~/git/runtime/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
-    rm results.*
+    rm -f results.*
     export DOTNET_ROOT=~/dotnet/
     echo Start http server
     ~/simple-server/bin/Release/net6.0/HttpServer > server.log &
@@ -176,11 +176,19 @@ prepare_environment
 
 build_runtime
 
-build_sample_aot
+build_sample -p:RunAOTCompilation=true
 run_sample aot/default/chrome chrome chromium
 run_sample aot/default/firefox firefox firefox
 
-build_sample_interp
+build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true"
+# seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
+run_sample aot/simd/firefox firefox firefox
+
+build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true"
+run_sample aot/wasm-eh/chrome chrome chromium
+run_sample aot/wasm-eh/firefox firefox firefox
+
+build_sample -p:RunAOTCompilation=false
 run_sample interp/default/chrome chrome chromium
 run_sample interp/default/firefox firefox firefox
 
