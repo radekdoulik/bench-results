@@ -85,15 +85,20 @@ prepare_environment() {
 build_runtime() {
     echo Build runtime
     cd ~/git/runtime
-    ./build.sh -bl -os Browser -subset mono+libs+packs -c Release
-}
-
-build_sample_aot() {
-    echo Build bench sample with AOT
-    cd ~/git/runtime
-    rm -rf artifacts/obj/mono/Wasm.Browser.Bench.Sample
-    rm -rf src/mono/sample/wasm/browser-bench/bin
-    ./dotnet.sh build -c Release /t:BuildSampleInTree -p:RunAOTCompilation=true src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
+    retries=0
+    while true; do
+	killall dotnet
+        ./build.sh -bl -os Browser -subset mono+libs+packs -c Release
+	build_exit_code=$?
+	[ $build_exit_code -eq 0 ] && break;
+        if [ $retries -gt 2 ]; then
+            echo Too many retries $retries
+	    echo Build exit code: $build_exit_code
+            exit 1
+        fi
+	echo Retrying build
+        ((retries++))
+    done
 }
 
 build_sample_interp() {
