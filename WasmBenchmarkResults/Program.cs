@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace WasmBenchmarkResults
@@ -22,7 +24,22 @@ namespace WasmBenchmarkResults
             FindResults("measurements");
             foreach (string flavor in flavors)
                 ExportCSV($"csv/results.{flavor}.csv", flavor);
+
             GenerateReadme();
+            GenerateIndex();
+        }
+
+        void GenerateIndex()
+        {
+            var indexData = Index.Create(timedPaths);
+            var options = new JsonSerializerOptions { IncludeFields = true };
+            var jsonData = JsonSerializer.Serialize<List<Index.Item>>(indexData, options);
+
+            using var indexFileStream = new FileStream("measurements/index.zip", FileMode.Create);
+            using var archive = new ZipArchive(indexFileStream, ZipArchiveMode.Create);
+            var entry = archive.CreateEntry("index.json");
+            using var writer = new StreamWriter(entry.Open());
+            writer.Write(jsonData);
         }
 
         string[] Builds = { "aot", "interp" };
@@ -104,7 +121,7 @@ namespace WasmBenchmarkResults
             }
         }
 
-        string ReadmeLine (KeyValuePair<DateTimeOffset, ResultsData> pair)
+        string ReadmeLine(KeyValuePair<DateTimeOffset, ResultsData> pair)
         {
             StringBuilder sb = new();
 
@@ -127,7 +144,7 @@ namespace WasmBenchmarkResults
                 sw.Write(intro);
 
                 foreach (var res in timedPaths.Reverse())
-                    sw.WriteLine (ReadmeLine(res));
+                    sw.WriteLine(ReadmeLine(res));
             }
         }
     }
