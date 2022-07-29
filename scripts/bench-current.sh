@@ -197,7 +197,7 @@ find measurements -name results.json | grep -v AppBundle > measurements/jsonData
 DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
 cd $RESULTS_DIR
 
-git add . ../../README.md ../../csv ../jsonDataFiles.txt
+git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index.zip
 echo Adding commit for: $LOG_HASH_DATE
 git commit -m "Add results for: $LOG_HASH_DATE"
 
