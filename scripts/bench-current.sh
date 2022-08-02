@@ -14,17 +14,19 @@ clean_environment()
 }
 
 prepare_tree() {
+    echo Clean tree
     rm -rf src/mono/wasm/emsdk
     git clean -xfd
     git stash
+    echo Checkout main
+    git checkout main
+    git pull -r
 
     if [ $# -gt 0 ]
     then
 	echo Build for date $1
-        rm -r src/mono/sample/wasm/browser-bench
-        git checkout main
-        git checkout src/mono/sample/wasm/browser-bench
-        git pull -r
+        # rm -r src/mono/sample/wasm/browser-bench
+        # git checkout src/mono/sample/wasm/browser-bench
         git checkout `git rev-list -n 1 --before="$1 23:59:59" main`
         if ! grep results.json src/mono/sample/wasm/browser-bench/main.js
         then
@@ -33,11 +35,8 @@ prepare_tree() {
             rm -rf src/mono/sample/wasm/browser-bench
             cp -r ~/git/browser-bench src/mono/sample/wasm/
         fi
-        HASH=`git rev-parse HEAD`
-    else
-        git pull -r
-        HASH=`git rev-parse HEAD~1`
     fi
+    HASH=`git rev-parse HEAD`
 
     if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.12" ]
     then
