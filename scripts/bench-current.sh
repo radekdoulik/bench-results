@@ -187,6 +187,10 @@ build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionH
 run_sample aot/wasm-eh/chrome chrome chromium
 run_sample aot/wasm-eh/firefox firefox firefox
 
+build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true -p:WasmExceptionHandling=true"
+# seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
+run_sample aot/simd+wasm-eh/firefox firefox firefox
+
 build_sample -p:RunAOTCompilation=false
 run_sample interp/default/chrome chrome chromium
 run_sample interp/default/firefox firefox firefox
