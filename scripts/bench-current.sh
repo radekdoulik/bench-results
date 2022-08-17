@@ -48,6 +48,8 @@ prepare_tree() {
     make provision-wasm
     cd -
 
+    export EMSDK_PATH=/home/rodo/git/runtime/src/mono/wasm/emsdk
+
     git apply ../runtime.patch
 
     rm -rf artifacts
@@ -166,6 +168,8 @@ run_sample() {
 
     echo Run finished - $1:$2:$3
 }
+
+echo Called with $@
 
 cd ~/git/runtime
 
