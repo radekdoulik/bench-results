@@ -24,10 +24,22 @@ prepare_tree() {
 
     if [ $# -gt 0 ]
     then
-	echo Build for date $1
-        # rm -r src/mono/sample/wasm/browser-bench
-        # git checkout src/mono/sample/wasm/browser-bench
-        git checkout `git rev-list -n 1 --before="$1 23:59:59" main`
+	case "$1" in
+            -h)
+		shift
+                echo Build for hash $1
+                # rm -r src/mono/sample/wasm/browser-bench
+                # git checkout src/mono/sample/wasm/browser-bench
+                git checkout $1
+		;;
+            *)
+                echo Build for date $1
+                # rm -r src/mono/sample/wasm/browser-bench
+                # git checkout src/mono/sample/wasm/browser-bench
+                git checkout `git rev-list -n 1 --before="$1 23:59:59" main`
+                ;;
+	esac
+
         if ! grep results.json src/mono/sample/wasm/browser-bench/main.js
         then
             echo browser-bench too old, using replacement
