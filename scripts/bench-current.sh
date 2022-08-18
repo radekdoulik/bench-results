@@ -28,14 +28,10 @@ prepare_tree() {
             -h)
 		shift
                 echo Build for hash $1
-                # rm -r src/mono/sample/wasm/browser-bench
-                # git checkout src/mono/sample/wasm/browser-bench
                 git checkout $1
 		;;
             *)
                 echo Build for date $1
-                # rm -r src/mono/sample/wasm/browser-bench
-                # git checkout src/mono/sample/wasm/browser-bench
                 git checkout `git rev-list -n 1 --before="$1 23:59:59" main`
                 ;;
 	esac
