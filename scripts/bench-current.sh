@@ -201,15 +201,15 @@ build_sample -p:RunAOTCompilation=true
 run_sample aot/default/chrome chrome chromium
 run_sample aot/default/firefox firefox firefox
 
-build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true"
+build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true -p:WasmEnableSIMD=truOBe"
 # seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
 run_sample aot/simd/firefox firefox firefox
 
-build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true"
+build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true -p:WasmEnableExceptionHandling=true"
 run_sample aot/wasm-eh/chrome chrome chromium
 run_sample aot/wasm-eh/firefox firefox firefox
 
-build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true -p:WasmExceptionHandling=true"
+build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true -p:WasmEnableSIMD=true -p:WasmExceptionHandling=true -p:WasmEnableExceptionHandling=true"
 # seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
 run_sample aot/simd+wasm-eh/firefox firefox firefox
 
