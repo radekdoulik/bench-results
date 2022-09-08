@@ -115,6 +115,8 @@ build_sample() {
     cd ~/git/runtime
     rm -rf artifacts/obj/mono/Wasm.Browser.Bench.Sample
     rm -rf src/mono/sample/wasm/browser-bench/bin
+    echo Cleaned old build
+    ls src/mono/sample/wasm/browser-bench/bin
     ./dotnet.sh build -c Release /t:BuildSampleInTree $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
 }
 
@@ -127,10 +129,15 @@ run_sample_start() {
     killall firefox
     killall HttpServer
     sleep 2
+    killall -9 chrome
+    killall -9 firefox
+    killall -9 HttpServer
 
     echo Run bench
     cd ~/git/runtime/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
     rm -f results.*
+    echo Cleaned old results
+    ls results.*
     export DOTNET_ROOT=~/dotnet/
     echo Start http server
     ~/simple-server/bin/Release/net6.0/HttpServer > server.log &
@@ -151,10 +158,13 @@ run_sample() {
 	  ((wait_time += 5))
           if [ -f results.json ]; then
 	      echo Finished after $wait_time seconds
+	      sleep 5
               killall HttpServer
+	      sleep 2
+              killall -9 HttpServer
               break
           fi
-	  if [ $wait_time -gt 1200 ]; then
+	  if [ $wait_time -gt 1800 ]; then
 	      if [ $retries -gt 2 ]; then
 		  echo Too many retries $retries
 		  break
