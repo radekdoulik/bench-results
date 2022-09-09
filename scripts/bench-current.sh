@@ -117,6 +117,7 @@ build_sample() {
     rm -rf src/mono/sample/wasm/browser-bench/bin
     echo Cleaned old build
     ls src/mono/sample/wasm/browser-bench/bin
+    echo ./dotnet.sh build -c Release /t:BuildSampleInTree $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
     ./dotnet.sh build -c Release /t:BuildSampleInTree $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
 }
 
@@ -201,15 +202,15 @@ build_sample -p:RunAOTCompilation=true
 run_sample aot/default/chrome chrome chromium
 run_sample aot/default/firefox firefox firefox
 
-build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true -p:WasmEnableSIMD=truOBe"
+build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true"
 # seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
 run_sample aot/simd/firefox firefox firefox
 
-build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true -p:WasmEnableExceptionHandling=true"
+build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true"
 run_sample aot/wasm-eh/chrome chrome chromium
 run_sample aot/wasm-eh/firefox firefox firefox
 
-build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true -p:WasmEnableSIMD=true -p:WasmExceptionHandling=true -p:WasmEnableExceptionHandling=true"
+build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true"
 # seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
 run_sample aot/simd+wasm-eh/firefox firefox firefox
 
