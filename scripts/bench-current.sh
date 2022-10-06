@@ -11,6 +11,10 @@ clean_environment()
     killall -9 firefox
     killall -9 dotnet
     killall -9 HttpServer
+
+    build_only=0
+    measure_only=0
+    default_flavor_only=0
 }
 
 prepare_tree() {
@@ -33,6 +37,22 @@ prepare_tree() {
 		shift
 		echo Build only, no measurement runs
 		build_only=1
+		;;
+	    -m)
+		shift
+		echo Measure only, skip runtime build
+		measure_only=1
+		;;
+	    -d)
+		shift
+		echo Default flavors only, skip other flavors
+		default_flavor_only=1
+		;;
+	    -a)
+		shift
+		echo Additional URL suffix $1
+		url_suffix=$1
+		shift
 		;;
             *)
                 echo Build for date $1
@@ -57,8 +77,14 @@ prepare_tree() {
 	repo_folder=~/git/runtime
     fi
 
-    echo Prepare tree in ${repo_folder}
     cd ${repo_folder}
+
+    if [ ${measure_only} -gt 0 ]
+    then
+	return
+    fi
+
+    echo Prepare tree in ${repo_folder}
 
     echo Clean tree
     rm -rf src/mono/wasm/emsdk
@@ -71,10 +97,10 @@ prepare_tree() {
 
     if ! grep results.json src/mono/sample/wasm/browser-bench/main.js
     then
-        echo browser-bench too old, using replacement
-        mv src/mono/sample/wasm/browser-bench src/mono/sample/wasm/browser-bench-bak
-        rm -rf src/mono/sample/wasm/browser-bench
-        cp -r ~/git/browser-bench src/mono/sample/wasm/
+	echo browser-bench too old, using replacement
+	mv src/mono/sample/wasm/browser-bench src/mono/sample/wasm/browser-bench-bak
+	rm -rf src/mono/sample/wasm/browser-bench
+	cp -r ~/git/browser-bench src/mono/sample/wasm/
     fi
 
     HASH=`git rev-parse HEAD`
@@ -116,14 +142,22 @@ prepare_environment() {
     firefox --version 2>&1| tail -1 >> versions.txt
     cd -
 
-    echo Copy libclang
-    mkdir -p artifacts/obj/mono/Browser.wasm.Release/cross/llvm/lib
-    cp -v ../llvm-project/artifacts/obj/InstallRoot-arm64/lib/libclang.so* artifacts/obj/mono/Browser.wasm.Release/cross/llvm/lib/
+    if [ ! ${measure_only} -gt 0 ]
+    then
+	echo Copy libclang
+	mkdir -p artifacts/obj/mono/Browser.wasm.Release/cross/llvm/lib
+	cp -v ../llvm-project/artifacts/obj/InstallRoot-arm64/lib/libclang.so* artifacts/obj/mono/Browser.wasm.Release/cross/llvm/lib/
+    fi
 
     LOG_HASH_DATE=`git log -1 --pretty="format:%H %ad"`
 }
 
 build_runtime() {
+    if [ ${measure_only} -gt 0 ]
+    then
+	return
+    fi
+
     echo Build runtime
     cd ${repo_folder}
     retries=0
@@ -180,13 +214,13 @@ run_sample_start() {
     echo Cleaned old results
     ls results.*
     export DOTNET_ROOT=~/dotnet/
-    echo Start http server
+    echo Start http server in `pwd`
     ~/simple-server/bin/Release/net6.0/HttpServer > server.log &
-    sleep 3
+    sleep 5
     BENCH_URL=`sed -e 's/Listening on //' < server.log`
-    echo Url: $BENCH_URL
+    echo Url: $BENCH_URL${url_suffix}
     echo Start $3
-    DISPLAY=:0 $3 $BENCH_URL &
+    DISPLAY=:0 $3 $BENCH_URL${url_suffix} &
 }
 
 run_sample() {
@@ -246,17 +280,20 @@ fi
 run_sample aot/default/chrome chrome chromium
 run_sample aot/default/firefox firefox firefox
 
-build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true"
-# seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
-run_sample aot/simd/firefox firefox firefox
+if [ ! ${default_flavor_only} -gt 0 ]
+then
+	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true"
+	# seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
+	run_sample aot/simd/firefox firefox firefox
 
-build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true"
-run_sample aot/wasm-eh/chrome chrome chromium
-run_sample aot/wasm-eh/firefox firefox firefox
+	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true"
+	run_sample aot/wasm-eh/chrome chrome chromium
+	run_sample aot/wasm-eh/firefox firefox firefox
 
-build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true"
-# seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
-run_sample aot/simd+wasm-eh/firefox firefox firefox
+	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true"
+	# seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
+	run_sample aot/simd+wasm-eh/firefox firefox firefox
+fi
 
 build_sample -p:RunAOTCompilation=false
 run_sample interp/default/chrome chrome chromium
