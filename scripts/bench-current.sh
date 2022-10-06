@@ -111,6 +111,14 @@ build_runtime() {
 }
 
 build_sample() {
+    killall chrome
+    killall firefox
+    killall HttpServer
+    sleep 2
+    killall -9 chrome
+    killall -9 firefox
+    killall -9 HttpServer
+
     echo Build bench sample with additional params: $@
     cd ~/git/runtime
     rm -rf artifacts/obj/mono/Wasm.Browser.Bench.Sample
