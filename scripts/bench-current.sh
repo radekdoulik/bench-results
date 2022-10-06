@@ -14,36 +14,69 @@ clean_environment()
 }
 
 prepare_tree() {
-    echo Clean tree
-    rm -rf src/mono/wasm/emsdk
-    git clean -xfd
-    git stash
-    echo Checkout main
-    git checkout main
-    git pull -r
-
-    if [ $# -gt 0 ]
-    then
+    checkout_args=main
+    while [ $# -gt 0 ]
+    do
 	case "$1" in
             -h)
 		shift
                 echo Build for hash $1
-                git checkout $1
+		checkout_args=$1
+		shift
+		;;
+	    -s)
+		shift
+		echo Build in separate folder
+		separate_folder=1
+		;;
+	    -b)
+		shift
+		echo Build only, no measurement runs
+		build_only=1
 		;;
             *)
                 echo Build for date $1
-                git checkout `git rev-list -n 1 --before="$1 23:59:59" main`
+                checkout_args=`git rev-list -n 1 --before="$1 23:59:59" main`
                 ;;
 	esac
+    done
 
-        if ! grep results.json src/mono/sample/wasm/browser-bench/main.js
-        then
-            echo browser-bench too old, using replacement
-            mv src/mono/sample/wasm/browser-bench src/mono/sample/wasm/browser-bench-bak
-            rm -rf src/mono/sample/wasm/browser-bench
-            cp -r ~/git/browser-bench src/mono/sample/wasm/
-        fi
+    if [ ${separate_folder} -gt 0 ]
+    then
+	repo_folder=~/git/runtime-${checkout_args}
+	if [ ! -d ${repo_folder} ]
+	then
+	    mkdir -p ${repo_folder}
+	fi
+	if [ ! -d ${repo_folder}/.git ]
+	then
+	    echo Copying .git
+	    cp -r ~/git/runtime/.git ${repo_folder}/
+	fi
+    else
+	repo_folder=~/git/runtime
     fi
+
+    echo Prepare tree in ${repo_folder}
+    cd ${repo_folder}
+
+    echo Clean tree
+    rm -rf src/mono/wasm/emsdk
+    git clean -xfd
+    git stash
+
+    echo Checkout ${checkout_args} and pull -r
+    git checkout ${checkout_args}
+    git pull -r
+
+    if ! grep results.json src/mono/sample/wasm/browser-bench/main.js
+    then
+        echo browser-bench too old, using replacement
+        mv src/mono/sample/wasm/browser-bench src/mono/sample/wasm/browser-bench-bak
+        rm -rf src/mono/sample/wasm/browser-bench
+        cp -r ~/git/browser-bench src/mono/sample/wasm/
+    fi
+
     HASH=`git rev-parse HEAD`
 
     if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.12" ]
@@ -52,11 +85,10 @@ prepare_tree() {
 	echo -n 3.1.13 > src/mono/wasm/emscripten-version.txt
     fi
 
+    export EMSDK_PATH=${repo_folder}/src/mono/wasm/emsdk
     cd src/mono/wasm
     make provision-wasm
     cd -
-
-    export EMSDK_PATH=/home/rodo/git/runtime/src/mono/wasm/emsdk
 
     git apply ../runtime.patch
 
@@ -79,7 +111,7 @@ prepare_environment() {
     cat /proc/meminfo >> hw-info.txt
     echo === outpuf of: cat /proc/cpuinfo >> hw-info.txt
     cat /proc/cpuinfo >> hw-info.txt
-    cp ~/git/runtime/src/mono/wasm/emscripten-version.txt .
+    cp ${repo_folder}/src/mono/wasm/emscripten-version.txt .
     chromium --version 2>&1| tail -1 >> versions.txt
     firefox --version 2>&1| tail -1 >> versions.txt
     cd -
@@ -93,7 +125,7 @@ prepare_environment() {
 
 build_runtime() {
     echo Build runtime
-    cd ~/git/runtime
+    cd ${repo_folder}
     retries=0
     while true; do
 	killall dotnet
@@ -120,7 +152,7 @@ build_sample() {
     killall -9 HttpServer
 
     echo Build bench sample with additional params: $@
-    cd ~/git/runtime
+    cd ${repo_folder}
     rm -rf artifacts/obj/mono/Wasm.Browser.Bench.Sample
     rm -rf src/mono/sample/wasm/browser-bench/bin
     echo Cleaned old build
@@ -143,7 +175,7 @@ run_sample_start() {
     killall -9 HttpServer
 
     echo Run bench
-    cd ~/git/runtime/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
+    cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
     rm -f results.*
     echo Cleaned old results
     ls results.*
@@ -198,8 +230,6 @@ run_sample() {
 
 echo Called with $@
 
-cd ~/git/runtime
-
 clean_environment
 prepare_tree $@
 prepare_environment
@@ -207,6 +237,12 @@ prepare_environment
 build_runtime
 
 build_sample -p:RunAOTCompilation=true
+if [ ${build_only} -gt 0 ]
+then
+    echo Build done
+    exit 0
+fi
+
 run_sample aot/default/chrome chrome chromium
 run_sample aot/default/firefox firefox firefox
 
