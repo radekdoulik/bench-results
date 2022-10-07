@@ -15,6 +15,7 @@ clean_environment()
     build_only=0
     measure_only=0
     default_flavor_only=0
+    separate_folder=0
 }
 
 prepare_tree() {
@@ -56,7 +57,10 @@ prepare_tree() {
 		;;
             *)
                 echo Build for date $1
-                checkout_args=`git rev-list -n 1 --before="$1 23:59:59" main`
+		cd ~/git/runtime
+		git fetch
+                checkout_args=`git rev-list -n 1 --before="$1 23:59:59" origin/main`
+		shift
                 ;;
 	esac
     done
