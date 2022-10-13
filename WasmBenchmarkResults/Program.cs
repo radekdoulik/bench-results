@@ -33,7 +33,7 @@ namespace WasmBenchmarkResults
         {
             var indexData = Index.Create(timedPaths);
             var options = new JsonSerializerOptions { IncludeFields = true };
-            var jsonData = JsonSerializer.Serialize<List<Index.Item>>(indexData, options);
+            var jsonData = JsonSerializer.Serialize<Index>(indexData, options);
 
             using var indexFileStream = new FileStream("measurements/index.zip", FileMode.Create);
             using var archive = new ZipArchive(indexFileStream, ZipArchiveMode.Create);
