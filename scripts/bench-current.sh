@@ -287,7 +287,7 @@ run_sample aot/default/firefox firefox firefox
 if [ ! ${default_flavor_only} -gt 0 ]
 then
 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true"
-	# seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
+	run_sample aot/simd/chrome chrome chromium
 	run_sample aot/simd/firefox firefox firefox
 
 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true"
@@ -295,7 +295,7 @@ then
 	run_sample aot/wasm-eh/firefox firefox firefox
 
 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true"
-	# seems broken on linux/arm64: run_sample aot/simd/chrome chrome chromium
+	run_sample aot/simd/chrome chrome chromium
 	run_sample aot/simd+wasm-eh/firefox firefox firefox
 fi
 
