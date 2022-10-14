@@ -306,6 +306,8 @@ run_sample interp/default/firefox firefox firefox
 cd $RESULTS_DIR/../..
 find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
 DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
+mv measurements/index.zip measurements/index2.zip
+DOTNET_ROOT=~/dotnet ~/bench-results-tools-old/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
 cd $RESULTS_DIR
 
 git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index.zip
