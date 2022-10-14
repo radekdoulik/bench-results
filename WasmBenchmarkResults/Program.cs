@@ -39,11 +39,11 @@ namespace WasmBenchmarkResults
             writer.Write(jsonData);
         }
 
-        string[] Builds = { "aot", "interp" };
-        string[] Configs = { "default", "threads", "simd", "wasm-eh", "simd+wasm-eh" };
-        string[] Envs = { "chrome", "firefox", "v8", "node" };
+        readonly string[] Builds = { "aot", "interp" };
+        readonly string[] Configs = { "default", "threads", "simd", "wasm-eh", "simd+wasm-eh" };
+        readonly string[] Envs = { "chrome", "firefox", "v8", "node" };
 
-        bool ContainsResults(string dir) => File.Exists(Path.Combine(dir, "git-log.txt")) && File.Exists(Path.Combine(dir, "results.json"));
+        static bool ContainsResults(string dir) => File.Exists(Path.Combine(dir, "git-log.txt")) && File.Exists(Path.Combine(dir, "results.json"));
 
         void FindResults(string path)
         {
