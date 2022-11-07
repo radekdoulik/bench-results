@@ -16,6 +16,7 @@ clean_environment()
     measure_only=0
     default_flavor_only=0
     separate_folder=0
+    dont_commit=0
 }
 
 prepare_tree() {
@@ -38,6 +39,11 @@ prepare_tree() {
 		shift
 		echo Build only, no measurement runs
 		build_only=1
+		;;
+	    --dont-commit)
+		shift
+		echo Do not commit results
+		dont_commit=1
 		;;
 	    -m)
 		shift
@@ -310,8 +316,11 @@ mv measurements/index.zip measurements/index2.zip
 DOTNET_ROOT=~/dotnet ~/bench-results-tools-old/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
 cd $RESULTS_DIR
 
-git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index.zip
-echo Adding commit for: $LOG_HASH_DATE
-git commit -m "Add results for: $LOG_HASH_DATE"
+if [ "${dont_commit}" -eq 0 ]
+then
+	git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index.zip ../index2.zip
+	echo Adding commit for: $LOG_HASH_DATE
+	git commit -m "Add results for: $LOG_HASH_DATE"
+fi
 
 echo Done
