@@ -127,6 +127,7 @@ prepare_tree() {
     cd -
 
     git apply ../runtime.patch
+    git apply ../runtime.2.patch
 
     rm -rf artifacts
 }
@@ -220,13 +221,23 @@ run_sample_start() {
 
     echo Run bench
     cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
-    rm -f results.*
+    rm -f results.* ../../../results.*
     echo Cleaned old results
-    ls results.*
+    ls results.* ../../../results.*
     export DOTNET_ROOT=~/dotnet/
     echo Start http server in `pwd`
+    rm -f server.log
+    server_wait_time=0
     ~/simple-server/bin/Release/net6.0/HttpServer > server.log &
-    sleep 5
+    until [ -f server.log ]
+    do
+        sleep 1
+        ((server_wait_time += 1))
+        if [ $server_wait_time -gt 30 ]; then
+            echo Unable to start server
+            return
+        fi
+    done
     BENCH_URL=`sed -e 's/Listening on //' < server.log`
     echo Url: $BENCH_URL${url_suffix}
     echo Start $3
@@ -234,15 +245,31 @@ run_sample_start() {
 }
 
 run_sample() {
+    rm -f bootstrap.flag
     run_sample_start $@
-    wait_time=0
     retries=0
+    bootstrap_retries=0
     echo Wait for bench to finish
+    sleep 5
+    wait_time=5
+    echo Waked
     while true; do
           sleep 5
-	  ((wait_time += 5))
+          ((wait_time += 5))
+          if [ ! -f bootstrap.flag ]; then
+                if [ $bootstrap_retries -gt 6 ]; then
+                    echo Too many retries $bootstrap_retries
+                    break
+                fi
+                ((bootstrap_retries++))
+                echo "Bootstrap failed, retrying (retries: $bootstrap_retries)"
+                run_sample_start $@
+                sleep 5
+                wait_time=5
+                continue
+          fi
           if [ -f results.json ]; then
-	      echo Finished after $wait_time seconds
+	      echo Finished after $wait_time seconds, retries: $retries, bootstraps: $bootstrap_retries
 	      sleep 5
               killall HttpServer
 	      sleep 2
@@ -257,6 +284,7 @@ run_sample() {
 	      ((retries++))
 	      run_sample_start $@
 	      wait_time=0
+          bootstrap_retries=0
 	  fi
     done
 
