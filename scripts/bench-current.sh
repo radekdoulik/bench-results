@@ -240,8 +240,13 @@ run_sample_start() {
     done
     BENCH_URL=`sed -e 's/Listening on //' < server.log`
     echo Url: $BENCH_URL${url_suffix}
-    echo Start $3
-    DISPLAY=:0 $3 $BENCH_URL${url_suffix} &
+    if [ "$3" == "firefox" ]; then
+        private_arg="--private-window"
+    else
+        private_arg="--incognito"
+    fi
+    echo Start $3 $private_arg $BENCH_URL${url_suffix} &
+    DISPLAY=:0 $3 $private_arg $BENCH_URL${url_suffix} &
 }
 
 run_sample() {
