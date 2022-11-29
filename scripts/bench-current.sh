@@ -27,6 +27,7 @@ prepare_tree() {
             -h)
 		shift
                 echo Build for hash $1
+                git fetch
 		checkout_args=$1
 		shift
 		;;
