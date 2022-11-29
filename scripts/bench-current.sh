@@ -13,6 +13,7 @@ clean_environment()
     killall -9 HttpServer
 
     build_only=0
+    firefox_only=0
     measure_only=0
     default_flavor_only=0
     separate_folder=0
@@ -45,6 +46,11 @@ prepare_tree() {
 		shift
 		echo Do not commit results
 		dont_commit=1
+		;;
+	    -f)
+		shift
+		echo Firefox only
+		firefox_only=1
 		;;
 	    -m)
 		shift
@@ -251,6 +257,10 @@ run_sample_start() {
 }
 
 run_sample() {
+    if [ "$3" != "firefox" ] && [ $firefox_only -gt 0 ]; then
+	echo Skip $3
+	return;
+    fi
     rm -f bootstrap.flag
     run_sample_start $@
     retries=0
