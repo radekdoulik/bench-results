@@ -21,6 +21,7 @@ clean_environment()
 }
 
 prepare_tree() {
+    do_fetch=0
     checkout_args=main
     while [ $# -gt 0 ]
     do
@@ -28,7 +29,7 @@ prepare_tree() {
             -h)
 		shift
                 echo Build for hash $1
-                git fetch
+		do_fetch=1
 		checkout_args=$1
 		shift
 		;;
@@ -71,7 +72,7 @@ prepare_tree() {
             *)
                 echo Build for date $1
 		cd ~/git/runtime
-		git fetch
+		git fetch origin
                 checkout_args=`git rev-list -n 1 --before="$1 23:59:59" origin/main`
 		shift
                 ;;
@@ -95,6 +96,11 @@ prepare_tree() {
     fi
 
     cd ${repo_folder}
+
+    if [ ${do_fetch} -gt 0 ]
+    then
+	git fetch --all
+    fi
 
     if [ ${measure_only} -gt 0 ]
     then
