@@ -346,17 +346,17 @@ run_sample aot/default/firefox firefox firefox
 
 if [ ! ${default_flavor_only} -gt 0 ]
 then
-	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20${snapshot_node}"
-	run_sample aot/simd/chrome chrome chromium
-	run_sample aot/simd/firefox firefox firefox
+	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=false%20-p:WasmEnableSIMD=false%20${snapshot_node}"
+	run_sample aot/nosimd/chrome chrome chromium
+	run_sample aot/nosimd/firefox firefox firefox
 
 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
 	run_sample aot/wasm-eh/chrome chrome chromium
 	run_sample aot/wasm-eh/firefox firefox firefox
 
-	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
-	run_sample aot/simd+wasm-eh/chrome chrome chromium
-	run_sample aot/simd+wasm-eh/firefox firefox firefox
+#	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
+#	run_sample aot/simd+wasm-eh/chrome chrome chromium
+#	run_sample aot/simd+wasm-eh/firefox firefox firefox
 fi
 
 build_sample -p:RunAOTCompilation=false
