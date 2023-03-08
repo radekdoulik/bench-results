@@ -215,8 +215,10 @@ build_sample() {
     rm -rf src/mono/sample/wasm/browser-bench/bin
     echo Cleaned old build
     ls src/mono/sample/wasm/browser-bench/bin
-    echo ./dotnet.sh build -c Release /t:BuildSampleInTree $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
-    ./dotnet.sh build -c Release /t:BuildSampleInTree $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
+    build_cmd="./dotnet.sh build -c Release /t:BuildSampleInTree -p:WasmMemorySnapshotNodeExecutable=\"`which node`\" $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj"
+    echo ${build_cmd}
+    #./dotnet.sh build -c Release /t:BuildSampleInTree $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
+    ${build_cmd}
 }
 
 run_sample_start() {
@@ -330,7 +332,9 @@ prepare_environment
 
 build_runtime
 
-build_sample -p:RunAOTCompilation=true
+snapshot_node="-p:WasmMemorySnapshotNodeExecutable=\"`which node`\""
+
+build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="${snapshot_node}"
 if [ ${build_only} -gt 0 ]
 then
     echo Build done
@@ -342,15 +346,15 @@ run_sample aot/default/firefox firefox firefox
 
 if [ ! ${default_flavor_only} -gt 0 ]
 then
-	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true"
+	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20${snapshot_node}"
 	run_sample aot/simd/chrome chrome chromium
 	run_sample aot/simd/firefox firefox firefox
 
-	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true"
+	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
 	run_sample aot/wasm-eh/chrome chrome chromium
 	run_sample aot/wasm-eh/firefox firefox firefox
 
-	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true"
+	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
 	run_sample aot/simd+wasm-eh/chrome chrome chromium
 	run_sample aot/simd+wasm-eh/firefox firefox firefox
 fi
