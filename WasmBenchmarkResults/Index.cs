@@ -75,8 +75,12 @@
             var ignoredFiles = new HashSet<string> { "results.html", "results.json" };
             sizes[measurementsMap["Size, AppBundle"]] = GetDirectorySize(new DirectoryInfo(path), ignoredFiles);
             sizes[measurementsMap["Size, managed"]] = GetDirectorySize(new DirectoryInfo(Path.Combine(path, "managed")));
-            sizes[measurementsMap["Size, dotnet.wasm"]] = new FileInfo(Path.Combine(path, "dotnet.wasm")).Length;
-            sizes[measurementsMap["Size, icudt.dat"]] = new FileInfo(Path.Combine(path, "icudt.dat")).Length;
+	    if (File.Exists(Path.Combine(path, "dotnet.wasm")))
+	       sizes[measurementsMap["Size, dotnet.wasm"]] = new FileInfo(Path.Combine(path, "dotnet.wasm")).Length;
+	    if (File.Exists(Path.Combine(path, "icudt.dat")))
+               sizes[measurementsMap["Size, icudt.dat"]] = new FileInfo(Path.Combine(path, "icudt.dat")).Length;
+	    if (File.Exists(Path.Combine(path, "icudt_no_CJK.dat")))
+               sizes[measurementsMap["Size, icudt_no_CJK.dat"]] = new FileInfo(Path.Combine(path, "icudt_no_CJK.dat")).Length;
 
             return sizes;
         }
