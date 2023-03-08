@@ -363,14 +363,17 @@ cd $RESULTS_DIR/../..
 find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
 DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
 mv measurements/index.zip measurements/index2.zip
-DOTNET_ROOT=~/dotnet ~/bench-results-tools-old/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
+#DOTNET_ROOT=~/dotnet ~/bench-results-tools-old/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
 cd $RESULTS_DIR
 
 if [ "${dont_commit}" -eq 0 ]
 then
-	git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index.zip ../index2.zip
+        echo Adding `pwd` to commit, should be $RESULTS_DIR
+	git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index2.zip
 	echo Adding commit for: $LOG_HASH_DATE
 	git commit -m "Add results for: $LOG_HASH_DATE"
+	git push
 fi
 
 echo Done
+date
