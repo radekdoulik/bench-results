@@ -386,9 +386,10 @@ run_sample interp/default/chrome chrome chromium
 run_sample interp/default/firefox firefox firefox
 
 cd $RESULTS_DIR/../..
-find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
-DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
-mv measurements/index.zip measurements/index2.zip
+#find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
+git pull -r
+DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults -a measurements/$HASH -i measurements/index2.zip
+#mv measurements/index.zip measurements/index2.zip
 #DOTNET_ROOT=~/dotnet ~/bench-results-tools-old/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
 cd $RESULTS_DIR
 
