@@ -1,6 +1,7 @@
 ﻿using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
+using Mono.Options;
 
 namespace WasmBenchmarkResults
 {
@@ -8,9 +9,15 @@ namespace WasmBenchmarkResults
     {
         SortedDictionary<DateTimeOffset, ResultsData> timedPaths = new();
         HashSet<string> flavors = new();
+        static string? AddPath = null;
+        static string IndexPath = "measurements/index.zip";
+        readonly string IndexJsonFilename = "index.json";
+        public static bool Verbose = false;
 
-        static public int Main()
+        static public int Main(string[] args)
         {
+            ProcessArguments(args);
+
             new Program().Run();
 
             return 0;
@@ -18,7 +25,22 @@ namespace WasmBenchmarkResults
 
         void Run()
         {
-            FindResults("measurements");
+            if (AddPath != null)
+            {
+                var index = LoadIndex();
+                FindResults(AddPath);
+
+                if (Verbose)
+                    Console.WriteLine($"  measurement tasks: {index.MeasurementMap.Count}\n  flavors: {index.FlavorMap.Count}\n  measurements: {index.Data.Count}");
+
+                index.AddResults(timedPaths, true);
+                SaveIndex(index);
+
+                return;
+            }
+
+            FindAllResults("measurements");
+
             foreach (string flavor in flavors)
                 ExportCSV($"csv/results.{flavor}.csv", flavor);
 
@@ -26,17 +48,34 @@ namespace WasmBenchmarkResults
             GenerateIndex();
         }
 
-        void GenerateIndex()
+        void SaveIndex(Index index)
         {
-            var indexData = Index.Create(timedPaths);
             var options = new JsonSerializerOptions { IncludeFields = true };
-            var jsonData = JsonSerializer.Serialize<Index>(indexData, options);
+            var jsonData = JsonSerializer.Serialize<Index>(index, options);
 
-            using var indexFileStream = new FileStream("measurements/index.zip", FileMode.Create);
+            using var indexFileStream = new FileStream(IndexPath, FileMode.Create);
             using var archive = new ZipArchive(indexFileStream, ZipArchiveMode.Create);
-            var entry = archive.CreateEntry("index.json");
+            var entry = archive.CreateEntry(IndexJsonFilename);
             using var writer = new StreamWriter(entry.Open());
             writer.Write(jsonData);
+        }
+
+        void GenerateIndex()
+        {
+            SaveIndex(Index.Create(timedPaths));
+        }
+
+        Index LoadIndex()
+        {
+            if (Verbose)
+                Console.WriteLine($"Loading index: {IndexPath}");
+
+            using var indexFileStream = new FileStream(IndexPath, FileMode.Open);
+            using var archive = new ZipArchive(indexFileStream, ZipArchiveMode.Read);
+            using var stream = archive.GetEntry(IndexJsonFilename).Open();
+            var options = new JsonSerializerOptions { IncludeFields = true };
+
+            return JsonSerializer.Deserialize<Index>(stream, options);
         }
 
         readonly string[] Builds = { "aot", "interp" };
@@ -45,31 +84,36 @@ namespace WasmBenchmarkResults
 
         static bool ContainsResults(string dir) => File.Exists(Path.Combine(dir, "git-log.txt")) && File.Exists(Path.Combine(dir, "results.json"));
 
-        void FindResults(string path)
+        void FindAllResults(string path)
         {
             foreach (var dir in Directory.GetDirectories(path))
-                foreach (var build in Builds)
-                    foreach (var config in Configs)
-                        foreach (var env in Envs)
+                FindResults(dir);
+        }
+
+        void FindResults(string path)
+        {
+            foreach (var build in Builds)
+                foreach (var config in Configs)
+                    foreach (var env in Envs)
+                    {
+                        var flavor = $"{build}.{config}.{env}";
+                        var flavoredDir = Path.Combine(path, build, config, env);
+                        if (!ContainsResults(flavoredDir))
+                            continue;
+
+                        flavors.Add(flavor);
+                        FlavorData data = new FlavorData(flavoredDir, flavor);
+                        ResultsData rd;
+                        if (timedPaths.ContainsKey(data.commitTime))
+                            rd = timedPaths[data.commitTime];
+                        else
                         {
-                            var flavor = $"{build}.{config}.{env}";
-                            var flavoredDir = Path.Combine(dir, build, config, env);
-                            if (!ContainsResults(flavoredDir))
-                                continue;
-
-                            flavors.Add(flavor);
-                            FlavorData data = new FlavorData(flavoredDir, flavor);
-                            ResultsData rd;
-                            if (timedPaths.ContainsKey(data.commitTime))
-                                rd = timedPaths[data.commitTime];
-                            else
-                            {
-                                rd = new ResultsData { baseDirectory = dir };
-                                timedPaths[data.commitTime] = rd;
-                            }
-
-                            rd.results[flavor] = data;
+                            rd = new ResultsData { baseDirectory = path };
+                            timedPaths[data.commitTime] = rd;
                         }
+
+                        rd.results[flavor] = data;
+                    }
         }
 
         public void ExportCSV(string path, string flavor = "aot.default.chrome")
@@ -143,6 +187,43 @@ namespace WasmBenchmarkResults
                 foreach (var res in timedPaths.Reverse())
                     sw.WriteLine(ReadmeLine(res));
             }
+        }
+
+        static List<string> ProcessArguments(string[] args)
+        {
+            var help = false;
+            var options = new OptionSet {
+                $"Usage: WasmBenchmarkResults OPTIONS*",
+                "",
+                "Creates or updated the result files",
+                "",
+                "Copyright 2023 Microsoft Corporation",
+                "",
+                "Options:",
+                { "a|add-measurements=",
+                    "Add measurements under the {PATH}",
+                    v => AddPath = v },
+                { "i|index-path=",
+                    "Specify index {PATH}, measurements/index.zip is the default value",
+                    v => IndexPath = v },
+                { "h|help|?",
+                    "Show this message and exit",
+                    v => help = v != null },
+                { "v",
+                    "Be verbose",
+                    v => Verbose = true },
+            };
+
+            var remaining = options.Parse(args);
+
+            if (help || args.Length < 1)
+            {
+                options.WriteOptionDescriptions(Console.Out);
+
+                Environment.Exit(0);
+            }
+
+            return remaining;
         }
     }
 }

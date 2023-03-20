@@ -17,9 +17,6 @@
 
         internal class IdMap : Dictionary<string, int>
         {
-            readonly List<string> names = new();
-            public string this[int id] => names[id];
-
             public new int this[string name]
             {
                 get
@@ -27,10 +24,10 @@
                     if (ContainsKey(name))
                         return base[name];
 
-                    names.Add(name);
-                    Add(name, names.Count - 1);
+                    var idx = Keys.Count;
+                    Add(name, idx);
 
-                    return names.Count - 1;
+                    return idx;
                 }
             }
         }
@@ -38,22 +35,42 @@
         static public Index Create(SortedDictionary<DateTimeOffset, ResultsData> timedPaths)
         {
             var index = new Index();
+            index.AddResults(timedPaths);
 
+            return index;
+        }
+
+        public void AddResults(SortedDictionary<DateTimeOffset, ResultsData> timedPaths, bool update = false)
+        {
             foreach (var rd in timedPaths.Values)
                 foreach (var fd in rd.results.Values)
                 {
-                    var fId = index.FlavorMap[fd.flavor];
-                    index.Data.Add(new Item()
+                    var fId = FlavorMap[fd.flavor];
+                    var newItem = new Item()
                     {
                         hash = Path.GetFileName(rd.baseDirectory),
                         flavorId = fId,
                         commitTime = fd.commitTime,
-                        minTimes = ConvertMinTimes(fd.results.minTimes, index.MeasurementMap),
-                        sizes = GetSizes(Path.Combine(rd.baseDirectory, fd.flavor.Replace('.', Path.DirectorySeparatorChar), "AppBundle"), index.MeasurementMap)
-                    });
-                }
+                        minTimes = ConvertMinTimes(fd.results.minTimes, MeasurementMap),
+                        sizes = GetSizes(Path.Combine(rd.baseDirectory, fd.flavor.Replace('.', Path.DirectorySeparatorChar), "AppBundle"), MeasurementMap)
+                    };
 
-            return index;
+                    if (update)
+                    {
+                        int iIdx = 0;
+                        foreach (var d in Data)
+                        {
+                            if (d.commitTime > newItem.commitTime)
+                                break;
+
+                            iIdx++;
+                        }
+                        Console.WriteLine($"put {newItem.commitTime.UtcDateTime} between {Data[iIdx - 1].commitTime.UtcDateTime} and {Data[iIdx].commitTime.UtcDateTime}");
+                        Data.Insert(iIdx, newItem);
+                    }
+                    else
+                        Data.Add(newItem);
+                }
         }
 
         static Dictionary<int, double> ConvertMinTimes(Dictionary<string, double> times, IdMap measurementsMap)
@@ -67,7 +84,9 @@
 
         static Dictionary<int, long> GetSizes(string path, IdMap measurementsMap)
         {
-            Console.WriteLine("get sizes of: " + path);
+            if (Program.Verbose)
+                Console.WriteLine("Get sizes of: " + path);
+
             if (!Directory.Exists(path))
                 return null;
 
@@ -75,12 +94,12 @@
             var ignoredFiles = new HashSet<string> { "results.html", "results.json" };
             sizes[measurementsMap["Size, AppBundle"]] = GetDirectorySize(new DirectoryInfo(path), ignoredFiles);
             sizes[measurementsMap["Size, managed"]] = GetDirectorySize(new DirectoryInfo(Path.Combine(path, "managed")));
-	    if (File.Exists(Path.Combine(path, "dotnet.wasm")))
-	       sizes[measurementsMap["Size, dotnet.wasm"]] = new FileInfo(Path.Combine(path, "dotnet.wasm")).Length;
-	    if (File.Exists(Path.Combine(path, "icudt.dat")))
-               sizes[measurementsMap["Size, icudt.dat"]] = new FileInfo(Path.Combine(path, "icudt.dat")).Length;
-	    if (File.Exists(Path.Combine(path, "icudt_no_CJK.dat")))
-               sizes[measurementsMap["Size, icudt_no_CJK.dat"]] = new FileInfo(Path.Combine(path, "icudt_no_CJK.dat")).Length;
+            if (File.Exists(Path.Combine(path, "dotnet.wasm")))
+                sizes[measurementsMap["Size, dotnet.wasm"]] = new FileInfo(Path.Combine(path, "dotnet.wasm")).Length;
+            if (File.Exists(Path.Combine(path, "icudt.dat")))
+                sizes[measurementsMap["Size, icudt.dat"]] = new FileInfo(Path.Combine(path, "icudt.dat")).Length;
+            if (File.Exists(Path.Combine(path, "icudt_no_CJK.dat")))
+                sizes[measurementsMap["Size, icudt_no_CJK.dat"]] = new FileInfo(Path.Combine(path, "icudt_no_CJK.dat")).Length;
 
             return sizes;
         }
