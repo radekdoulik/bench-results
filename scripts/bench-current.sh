@@ -401,5 +401,7 @@ then
 	git push
 fi
 
+clean_environment
+
 echo Done
 date
