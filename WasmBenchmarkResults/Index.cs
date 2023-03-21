@@ -65,8 +65,11 @@
 
                             iIdx++;
                         }
-                        Console.WriteLine($"put {newItem.commitTime.UtcDateTime} between {Data[iIdx - 1].commitTime.UtcDateTime} and {Data[iIdx].commitTime.UtcDateTime}");
-                        Data.Insert(iIdx, newItem);
+
+			if (iIdx >= Data.Count)
+			    Data.Add(newItem);
+			else
+			    Data.Insert(iIdx, newItem);
                     }
                     else
                         Data.Add(newItem);
