@@ -287,14 +287,14 @@ run_sample_start() {
         fi
     done
     BENCH_URL=`head -1 server.log | sed -e 's/Listening on //'`
-    echo Url: $BENCH_URL${url_suffix}
+    echo Url: $BENCH_URL$4${url_suffix}
     if [ "$3" == "firefox" ]; then
         private_arg="--private-window"
     else
         private_arg="--incognito"
     fi
-    echo Start $3 $private_arg $BENCH_URL${url_suffix} &
-    DISPLAY=:0 $3 $private_arg $BENCH_URL${url_suffix} &
+    echo Start $3 $private_arg $BENCH_URL$4${url_suffix} &
+    DISPLAY=:0 $3 $private_arg $BENCH_URL$4${url_suffix} &
 }
 
 run_sample() {
@@ -379,13 +379,17 @@ run_sample aot/default/firefox firefox firefox
 
 if [ ! ${default_flavor_only} -gt 0 ]
 then
-	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=false%20-p:WasmEnableSIMD=false%20${snapshot_node}"
-	run_sample aot/nosimd/chrome chrome chromium
-	run_sample aot/nosimd/firefox firefox firefox
+	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=false%20-p:WasmEnableSIMD=false%20${snapshot_node} -p:WasmExceptionHandling=false%20-p:WasmEnableExceptionHandling=false%20"
+	run_sample aot/legacy/chrome chrome chromium
+	run_sample aot/legacy/firefox firefox firefox
 
-	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
-	run_sample aot/wasm-eh/chrome chrome chromium
-	run_sample aot/wasm-eh/firefox firefox firefox
+# 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
+# 	run_sample aot/wasm-eh/chrome chrome chromium
+# 	run_sample aot/wasm-eh/firefox firefox firefox
+
+	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
+	run_sample aot/hybrid-globalization/chrome chrome chromium "?task=String"
+	run_sample aot/hybrid-globalization/firefox firefox firefox "?task=String"
 
 #	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
 #	run_sample aot/simd+wasm-eh/chrome chrome chromium
