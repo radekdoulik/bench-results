@@ -18,6 +18,7 @@ clean_environment()
     default_flavor_only=0
     separate_folder=0
     dont_commit=0
+    emscripten_provisioned=0
 }
 
 fix_emscripten_env() {
@@ -27,6 +28,15 @@ fix_emscripten_env() {
 	export EMSDK_PATH=/home/rodo/git/emsdk-3130
 	export LD_LIBRARY_PATH=/home/rodo/git/binaryen/lib
 	export PATH=/home/rodo/git/emscripten:$PATH
+	emscripten_provisioned=1
+    fi
+    if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.34" ]
+    then
+	echo Using local 3.1.34 emscripten instead of prebuilt
+	export EMSDK_PATH=/home/rodo/git/emsdk-3134
+	export LD_LIBRARY_PATH=/home/rodo/git/binaryen-3134/lib
+	export PATH=/home/rodo/git/emscripten-3134:$PATH
+	emscripten_provisioned=1
     fi
 }
 
@@ -147,10 +157,11 @@ prepare_tree() {
 
     export EMSDK_PATH=${repo_folder}/src/mono/wasm/emsdk
 
-    if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.30" ]
+#    if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.30" ]
+#    then
+    fix_emscripten_env
+    if [ ${emscripten_provisioned} -lt 1 ]
     then
-	fix_emscripten_env
-    else
         cd src/mono/wasm
         make provision-wasm
         cd -
