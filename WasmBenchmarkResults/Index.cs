@@ -99,6 +99,8 @@
             sizes[measurementsMap["Size, managed"]] = GetDirectorySize(new DirectoryInfo(Path.Combine(path, "managed")));
             if (File.Exists(Path.Combine(path, "dotnet.wasm")))
                 sizes[measurementsMap["Size, dotnet.wasm"]] = new FileInfo(Path.Combine(path, "dotnet.wasm")).Length;
+            if (File.Exists(Path.Combine(path, "dotnet.native.wasm")))
+                sizes[measurementsMap["Size, dotnet.native.wasm"]] = new FileInfo(Path.Combine(path, "dotnet.native.wasm")).Length;
             if (File.Exists(Path.Combine(path, "icudt.dat")))
                 sizes[measurementsMap["Size, icudt.dat"]] = new FileInfo(Path.Combine(path, "icudt.dat")).Length;
             if (File.Exists(Path.Combine(path, "icudt_no_CJK.dat")))
