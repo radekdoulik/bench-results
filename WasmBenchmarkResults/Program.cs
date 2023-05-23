@@ -79,7 +79,7 @@ namespace WasmBenchmarkResults
         }
 
         readonly string[] Builds = { "aot", "interp" };
-        readonly string[] Configs = { "default", "threads", "simd", "wasm-eh", "simd+wasm-eh" };
+        readonly string[] Configs = { "default", "threads", "simd", "wasm-eh", "simd+wasm-eh", "legacy", "hybrid-globalization", "nosimd" };
         readonly string[] Envs = { "chrome", "firefox", "v8", "node" };
 
         static bool ContainsResults(string dir) => File.Exists(Path.Combine(dir, "git-log.txt")) && File.Exists(Path.Combine(dir, "results.json"));
