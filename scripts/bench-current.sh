@@ -363,6 +363,14 @@ clean_environment
 prepare_tree $@
 prepare_environment
 
+(cd ~/WasmPerformanceMeasurements/; git pull -r)
+
+if "$HASH" == "`cat ~/WasmPerformanceMeasurements/latest.txt`"
+then
+    echo $HASH is already latest measurement => exit
+    exit 0
+fi
+
 build_runtime
 
 snapshot_node="-p:WasmMemorySnapshotNodeExecutable=\"`which node`\""
@@ -403,6 +411,7 @@ run_sample interp/default/firefox firefox firefox
 cd $RESULTS_DIR/../..
 #find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
 git pull -r
+echo DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults -a measurements/$HASH -i measurements/index2.zip
 DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults -a measurements/$HASH -i measurements/index2.zip
 #mv measurements/index.zip measurements/index2.zip
 #DOTNET_ROOT=~/dotnet ~/bench-results-tools-old/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
@@ -410,8 +419,9 @@ cd $RESULTS_DIR
 
 if [ "${dont_commit}" -eq 0 ]
 then
-        echo Adding `pwd` to commit, should be $RESULTS_DIR
-	git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index2.zip
+	echo Adding `pwd` to commit, should be $RESULTS_DIR
+	echo -n $HASH > ../latest.txt
+	git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index2.zip ../latest.txt
 	echo Adding commit for: $LOG_HASH_DATE
 	git commit -m "Add results for: $LOG_HASH_DATE"
 	git push
