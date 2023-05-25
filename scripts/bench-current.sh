@@ -397,7 +397,10 @@ then
 
 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
 	run_sample aot/hybrid-globalization/chrome chrome chromium "?task=String"
-	run_sample aot/hybrid-globalization/firefox firefox firefox "?task=String"
+#	run_sample aot/hybrid-globalization/firefox firefox firefox "?task=String"   firefox is missing Intl.segmenter
+
+	build_sample -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
+	run_sample interp/hybrid-globalization/chrome chrome chromium "?task=String"
 
 #	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
 #	run_sample aot/simd+wasm-eh/chrome chrome chromium
