@@ -365,7 +365,7 @@ prepare_tree $@
 prepare_environment
 
 (cd ~/WasmPerformanceMeasurements/; git stash; git pull -r)
-
+echo Check hash: "$HASH" == "`cat ~/WasmPerformanceMeasurements/latest.txt`"
 if "$HASH" == "`cat ~/WasmPerformanceMeasurements/latest.txt`"
 then
     echo $HASH is already latest measurement => exit
@@ -428,7 +428,9 @@ then
 	git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index2.zip ../latest.txt
 	echo Adding commit for: $LOG_HASH_DATE
 	git commit -m "Add results for: $LOG_HASH_DATE"
+	echo Push to repo
 	git push
+	echo Result: $?
 fi
 
 clean_environment
