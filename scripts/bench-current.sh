@@ -136,6 +136,7 @@ prepare_tree() {
     git stash
 
     echo Checkout ${checkout_args} and pull -r
+    git stash
     git checkout ${checkout_args}
     git pull -r
 
@@ -363,7 +364,7 @@ clean_environment
 prepare_tree $@
 prepare_environment
 
-(cd ~/WasmPerformanceMeasurements/; git pull -r)
+(cd ~/WasmPerformanceMeasurements/; git stash; git pull -r)
 
 if "$HASH" == "`cat ~/WasmPerformanceMeasurements/latest.txt`"
 then
