@@ -96,7 +96,10 @@
             var sizes = new Dictionary<int, long>();
             var ignoredFiles = new HashSet<string> { "results.html", "results.json" };
             sizes[measurementsMap["Size, AppBundle"]] = GetDirectorySize(new DirectoryInfo(path), ignoredFiles);
-            sizes[measurementsMap["Size, managed"]] = GetDirectorySize(new DirectoryInfo(Path.Combine(path, "managed")));
+            if (Directory.Exists(Path.Combine(path, "managed")))
+                sizes[measurementsMap["Size, managed"]] = GetDirectorySize(new DirectoryInfo(Path.Combine(path, "managed")));
+            if (Directory.Exists(Path.Combine(path, "_framework")))
+                sizes[measurementsMap["Size, _framework"]] = GetDirectorySize(new DirectoryInfo(Path.Combine(path, "_framework")));
             if (File.Exists(Path.Combine(path, "dotnet.wasm")))
                 sizes[measurementsMap["Size, dotnet.wasm"]] = new FileInfo(Path.Combine(path, "dotnet.wasm")).Length;
             if (File.Exists(Path.Combine(path, "dotnet.native.wasm")))
