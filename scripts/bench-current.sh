@@ -40,6 +40,15 @@ fix_emscripten_env() {
     fi
 }
 
+git_pull() {
+    git pull -r
+    if [ $? != 0 ]
+    then
+        git rebase --skip
+        git pull -r
+    fi
+}
+
 prepare_tree() {
     do_fetch=0
     checkout_args=main
@@ -138,7 +147,7 @@ prepare_tree() {
     echo Checkout ${checkout_args} and pull -r
     git stash
     git checkout ${checkout_args}
-    git pull -r
+    git_pull
 
     if ! grep results.json src/mono/sample/wasm/browser-bench/main.js
     then
@@ -364,7 +373,7 @@ clean_environment
 prepare_tree $@
 prepare_environment
 
-(cd ~/WasmPerformanceMeasurements/; git stash; git pull -r)
+(cd ~/WasmPerformanceMeasurements/; git stash; git_pull)
 echo Check hash: "$HASH" == "`cat ~/WasmPerformanceMeasurements/latest.txt`"
 if "$HASH" == "`cat ~/WasmPerformanceMeasurements/latest.txt`"
 then
@@ -414,7 +423,8 @@ run_sample interp/default/firefox firefox firefox
 
 cd $RESULTS_DIR/../..
 #find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
-git pull -r
+git_pull
+
 echo DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults -a measurements/$HASH -i measurements/index2.zip
 DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults -a measurements/$HASH -i measurements/index2.zip
 #mv measurements/index.zip measurements/index2.zip
