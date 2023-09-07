@@ -238,7 +238,41 @@ build_runtime() {
     done
     echo Build HttpServer
     ./dotnet.sh build -c Release src/mono/sample/wasm/simple-server/HttpServer.csproj
-    Runtime build done
+
+    echo Build WBT
+    ./dotnet.sh build src/mono/wasm/Wasm.Build.Tests/Wasm.Build.Tests.csproj -bl -c Release -t:Test -p:TargetOS=browser -p:TargetArchitecture=wasm -p:XUnitClassName=none
+
+    echo Prepare blazor-frame build
+    cd ${repo_folder}/src/mono/sample/wasm/blazor-frame
+    cp -v ../../../../../src/mono/wasm/Wasm.Build.Tests/data/WasmOverridePacks.targets .  
+    cp -v ../../../../../src/mono/wasm/Wasm.Build.Tests/data/Blazor.Directory.Build.targets Directory.Build.targets
+    # prepare nuget config
+    echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+<configuration>
+  <!-- Don't use any higher level config files. -->
+  <fallbackPackageFolders>
+    <clear />
+  </fallbackPackageFolders>
+  <packageSources>
+    <clear />
+    <add key=\"nuget-local\" value=\"${repo_folder}/artifacts/packages/Release/Shipping/\" />
+    <add key=\"dotnet8\" value=\"https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json\" />
+    <add key=\"nuget.org\"  value=\"https://api.nuget.org/v3/index.json\" protocolVersion=\"3\" />
+  </packageSources>
+    <disabledPackageSources>
+    <clear />
+  </disabledPackageSources>
+</configuration>
+" > nuget.config
+
+    echo nuget.config:
+    cat nuget.config
+    export DOTNET_ROOT=${repo_folder}/artifacts/bin/dotnet-latest
+    export PATH="${DOTNET_ROOT}:${PATH}"
+
+    cd ${repo_folder}
+
+    echo Runtime build done
 }
 
 build_sample() {
@@ -260,6 +294,30 @@ build_sample() {
     echo ${build_cmd}
     #./dotnet.sh build -c Release /t:BuildSampleInTree $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
     ${build_cmd}
+
+    echo Build the blazor-frame
+
+    export DOTNET_ROOT=${repo_folder}/artifacts/bin/dotnet-latest
+    export PATH="${DOTNET_ROOT}:${PATH}"
+
+    cd ${repo_folder}/src/mono/sample/wasm/blazor-frame
+    rm -rf bin obj
+    old_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+    unset LD_LIBRARY_PATH
+    echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+    echo dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
+    dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
+    export LD_LIBRARY_PATH=${old_LD_LIBRARY_PATH}
+    echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+
+    echo Link blazor-frame
+    cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
+    ln -s ${repo_folder}/src/mono/sample/wasm/blazor-frame/bin/Release/net8.0/publish/wwwroot/blazor-template .
+    echo ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/blazor-template
+    ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/blazor-template
+    cd ${repo_folder}
+
+    echo Build bench sample done
 }
 
 run_sample_start() {
