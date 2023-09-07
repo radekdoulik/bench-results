@@ -401,7 +401,8 @@ run_sample() {
               killall -9 HttpServer
               break
           fi
-	  if [ $wait_time -gt 1800 ]; then
+	  if [ $wait_time -gt 2400 ]; then
+	      echo "Timeout after $wait_time ($retries retries)"
 	      if [ $retries -gt 2 ]; then
 		  echo Too many retries $retries
 		  break
@@ -409,7 +410,7 @@ run_sample() {
 	      ((retries++))
 	      run_sample_start $@
 	      wait_time=0
-          bootstrap_retries=0
+	      bootstrap_retries=0
 	  fi
     done
 
