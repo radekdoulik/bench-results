@@ -494,7 +494,7 @@ if [ "${dont_commit}" -eq 0 ]
 then
 	echo Adding `pwd` to commit, should be $RESULTS_DIR
 	echo -n $HASH > ../latest.txt
-	git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index2.zip ../latest.txt
+	git add . ../../README.md ../../csv ../jsonDataFiles.txt ../index2.zip ../latest.txt ../slices/
 	echo Adding commit for: $LOG_HASH_DATE
 	git commit -m "Add results for: $LOG_HASH_DATE"
 	echo Push to repo
