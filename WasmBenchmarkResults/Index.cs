@@ -1,4 +1,6 @@
-﻿namespace WasmBenchmarkResults
+﻿using System;
+
+namespace WasmBenchmarkResults
 {
     internal class Index
     {
@@ -36,6 +38,24 @@
         {
             var index = new Index();
             index.AddResults(timedPaths);
+
+            return index;
+        }
+
+        public void Sort()
+        {
+            Data.Sort((x, y) => x.commitTime.CompareTo(y.commitTime));
+        }
+
+        public Index GetLatest14Days()
+        {
+            var index = new Index();
+            index.FlavorMap = FlavorMap;
+            index.MeasurementMap = MeasurementMap;
+
+            var edge = Data[Data.Count -1].commitTime.AddDays(-14);
+            index.Data = Data.FindAll(i => i.commitTime >= edge);
+            index.Sort();
 
             return index;
         }

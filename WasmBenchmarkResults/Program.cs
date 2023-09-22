@@ -48,16 +48,45 @@ namespace WasmBenchmarkResults
             GenerateIndex();
         }
 
-        void SaveIndex(Index index)
+        internal class LatestData
+        {
+            public DateTimeOffset FirstDate;
+            public DateTimeOffset SliceStartDate;
+            public DateTimeOffset SliceEndDate;
+            public Index Index;
+        }
+
+        void SaveIndex(Index index, string path)
         {
             var options = new JsonSerializerOptions { IncludeFields = true };
-            var jsonData = JsonSerializer.Serialize<Index>(index, options);
+            var json = JsonSerializer.Serialize<Index>(index, options);
+            SaveJsonInZip(json, path);
+        }
 
-            using var indexFileStream = new FileStream(IndexPath, FileMode.Create);
-            using var archive = new ZipArchive(indexFileStream, ZipArchiveMode.Create);
+        void SaveJsonInZip(string json, string path)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            using var fileStream = new FileStream(path, FileMode.Create);
+            using var archive = new ZipArchive(fileStream, ZipArchiveMode.Create);
             var entry = archive.CreateEntry(IndexJsonFilename);
             using var writer = new StreamWriter(entry.Open());
-            writer.Write(jsonData);
+            writer.Write(json);
+        }
+
+        void SaveIndex(Index index)
+        {
+            index.Sort();
+            SaveIndex(index, IndexPath);
+            SaveSlicedIndex(index);
+        }
+
+        void SaveSlicedIndex(Index index)
+        {
+            var latest = index.GetLatest14Days();
+            var options = new JsonSerializerOptions { IncludeFields = true };
+            var json = JsonSerializer.Serialize<LatestData>(new LatestData { FirstDate = index.Data[0].commitTime, SliceStartDate = latest.Data[0].commitTime, SliceEndDate = latest.Data[latest.Data.Count -1].commitTime, Index = latest }, options);
+
+            SaveJsonInZip(json, "measurements/slices/last.zip");
         }
 
         void GenerateIndex()
