@@ -389,8 +389,8 @@ run_sample_start() {
     echo Start http server in `pwd`
     rm -f server.log
     server_wait_time=0
-    # ~/simple-server/bin/Release/net6.0/HttpServer > server.log &
-    ${repo_folder}/src/mono/sample/wasm/simple-server/bin/Release/net6.0/HttpServer > server.log &
+    # ~/simple-server/bin/Release/net8.0/HttpServer > server.log &
+    ${repo_folder}/src/mono/sample/wasm/simple-server/bin/Release/net8.0/HttpServer > server.log &
 
     until [ -f server.log ]
     do
