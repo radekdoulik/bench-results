@@ -385,7 +385,7 @@ run_sample_start() {
     rm -f results.* ../../../results.*
     echo Cleaned old results
     ls results.* ../../../results.*
-    export DOTNET_ROOT=~/dotnet/
+    export DOTNET_ROOT=${repo_folder}/.dotnet/
     echo Start http server in `pwd`
     rm -f server.log
     server_wait_time=0
