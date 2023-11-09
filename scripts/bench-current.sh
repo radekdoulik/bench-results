@@ -541,8 +541,8 @@ cd $RESULTS_DIR/../..
 #find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
 git_pull
 
-echo DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults -a measurements/$HASH -i measurements/index2.zip
-DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults -a measurements/$HASH -i measurements/index2.zip
+echo DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults -v -a measurements/$HASH -i measurements/index2.zip
+DOTNET_ROOT=~/dotnet ~/bench-results-tools/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults -v -a measurements/$HASH -i measurements/index2.zip
 #mv measurements/index.zip measurements/index2.zip
 #DOTNET_ROOT=~/dotnet ~/bench-results-tools-old/WasmBenchmarkResults/bin/Release/net6.0/WasmBenchmarkResults
 cd $RESULTS_DIR
