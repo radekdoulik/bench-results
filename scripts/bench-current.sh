@@ -364,6 +364,12 @@ build_sample() {
     ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/browser-template
     cd ${repo_folder}
 
+    echo Copy AppBundle
+    FLAVOR_RESULTS_DIR=${RESULTS_DIR}/${sample_flavor_dir}
+    APPBUNDLE_COPY_DIR=${FLAVOR_RESULTS_DIR}/AppBundle
+    mkdir ${APPBUNDLE_COPY_DIR}
+    cp -lrv ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle ${APPBUNDLE_COPY_DIR}/
+
     echo Build bench sample done
 }
 
@@ -467,7 +473,6 @@ run_sample() {
     echo Copy results
     cp -v results.* $FLAVOR_RESULTS_DIR
     git log -1 $HASH > $FLAVOR_RESULTS_DIR/git-log.txt
-    cp -rl . $FLAVOR_RESULTS_DIR/AppBundle
     cat $FLAVOR_RESULTS_DIR/git-log.txt
 
     echo Run finished - $1:$2:$3
@@ -491,6 +496,7 @@ build_runtime
 
 snapshot_node="-p:WasmMemorySnapshotNodeExecutable=\"`which node`\""
 
+sample_flavor_dir=aot/default
 build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="${snapshot_node}"
 if [ ${build_only} -gt 0 ]
 then
@@ -498,34 +504,38 @@ then
     exit 0
 fi
 
-run_sample aot/default/chrome chrome chromium
-run_sample aot/default/firefox firefox firefox
+run_sample ${sample_flavor_dir}/chrome chrome chromium
+run_sample ${sample_flavor_dir}/firefox firefox firefox
 
 if [ ! ${default_flavor_only} -gt 0 ]
 then
+    sample_flavor_dir=aot/legacy
 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=false%20-p:WasmEnableSIMD=false%20${snapshot_node} -p:WasmExceptionHandling=false%20-p:WasmEnableExceptionHandling=false%20"
-	run_sample aot/legacy/chrome chrome chromium
-	run_sample aot/legacy/firefox firefox firefox
+	run_sample ${sample_flavor_dir}/chrome chrome chromium
+	run_sample ${sample_flavor_dir}/firefox firefox firefox
 
 # 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
 # 	run_sample aot/wasm-eh/chrome chrome chromium
 # 	run_sample aot/wasm-eh/firefox firefox firefox
 
+    sample_flavor_dir=aot/hybrid-globalization
 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
-	run_sample aot/hybrid-globalization/chrome chrome chromium "?task=String"
+	run_sample ${sample_flavor_dir}/chrome chrome chromium "?task=String"
 #	run_sample aot/hybrid-globalization/firefox firefox firefox "?task=String"   firefox is missing Intl.segmenter
 
+    sample_flavor_dir=interp/hybrid-globalization
 	build_sample -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
-	run_sample interp/hybrid-globalization/chrome chrome chromium "?task=String"
+	run_sample ${sample_flavor_dir}/chrome chrome chromium "?task=String"
 
 #	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
 #	run_sample aot/simd+wasm-eh/chrome chrome chromium
 #	run_sample aot/simd+wasm-eh/firefox firefox firefox
 fi
 
+sample_flavor_dir=interp/default
 build_sample -p:RunAOTCompilation=false
-run_sample interp/default/chrome chrome chromium
-run_sample interp/default/firefox firefox firefox
+run_sample ${sample_flavor_dir}/chrome chrome chromium
+run_sample ${sample_flavor_dir}/firefox firefox firefox
 
 cd $RESULTS_DIR/../..
 #find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
