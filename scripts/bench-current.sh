@@ -364,9 +364,9 @@ build_sample() {
     ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/browser-template
     cd ${repo_folder}
 
-    echo Copy AppBundle
     FLAVOR_RESULTS_DIR=${RESULTS_DIR}/${sample_flavor_dir}
     APPBUNDLE_COPY_DIR=${FLAVOR_RESULTS_DIR}/AppBundle
+    echo Copy ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle to ${APPBUNDLE_COPY_DIR}/
     mkdir ${APPBUNDLE_COPY_DIR}
     cp -lrv ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle ${APPBUNDLE_COPY_DIR}/
 
@@ -514,6 +514,7 @@ then
 	run_sample ${sample_flavor_dir}/chrome chrome chromium
 	run_sample ${sample_flavor_dir}/firefox firefox firefox
 
+#   sample_flavor_dir=aot/wasm-eh
 # 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
 # 	run_sample aot/wasm-eh/chrome chrome chromium
 # 	run_sample aot/wasm-eh/firefox firefox firefox
