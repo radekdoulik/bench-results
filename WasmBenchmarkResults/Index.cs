@@ -66,6 +66,9 @@ namespace WasmBenchmarkResults
             foreach (var rd in timedPaths.Values)
                 foreach (var fd in rd.results.Values)
                 {
+                    var appBundleDir = Path.Combine(rd.baseDirectory, fd.flavor.Replace('.', Path.DirectorySeparatorChar), "AppBundle");
+                    if (!Directory.Exists(appBundleDir))
+                        appBundleDir = Path.Combine(rd.baseDirectory, fd.flavor.Replace('.', Path.DirectorySeparatorChar), "..", "AppBundle");
                     var fId = FlavorMap[fd.flavor];
                     var newItem = new Item()
                     {
@@ -73,7 +76,7 @@ namespace WasmBenchmarkResults
                         flavorId = fId,
                         commitTime = fd.commitTime,
                         minTimes = ConvertMinTimes(fd.results.minTimes, MeasurementMap),
-                        sizes = GetSizes(Path.Combine(rd.baseDirectory, fd.flavor.Replace('.', Path.DirectorySeparatorChar), "AppBundle"), MeasurementMap)
+                        sizes = GetSizes(appBundleDir, MeasurementMap)
                     };
 
                     if (update)
