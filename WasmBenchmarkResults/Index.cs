@@ -90,10 +90,15 @@ namespace WasmBenchmarkResults
                             iIdx++;
                         }
 
-			if (iIdx >= Data.Count)
+			if (iIdx >= Data.Count) {
 			    Data.Add(newItem);
-			else
+			    if (Program.Verbose)
+			       Console.WriteLine($"Added {fd.flavor} {fd.commitTime}");
+			} else {
 			    Data.Insert(iIdx, newItem);
+			    if (Program.Verbose)
+			       Console.WriteLine($"Updated {fd.flavor} {fd.commitTime}");
+			}
                     }
                     else
                         Data.Add(newItem);

@@ -150,7 +150,10 @@ namespace WasmBenchmarkResults
                             timedPaths[data.commitTime] = rd;
                         }
 
-                        rd.results[flavor] = data;
+			if (Verbose)
+			   Console.WriteLine($"  add data from dir: {flavoredDir}");
+
+			rd.results[flavor] = data;
                     }
         }
 
