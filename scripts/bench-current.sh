@@ -467,7 +467,7 @@ run_sample() {
     echo Copy results
     cp -v results.* $FLAVOR_RESULTS_DIR
     git log -1 $HASH > $FLAVOR_RESULTS_DIR/git-log.txt
-    cp -r . $FLAVOR_RESULTS_DIR/AppBundle
+    cp -rl . $FLAVOR_RESULTS_DIR/AppBundle
     cat $FLAVOR_RESULTS_DIR/git-log.txt
 
     echo Run finished - $1:$2:$3
