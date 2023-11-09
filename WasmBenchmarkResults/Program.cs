@@ -10,6 +10,7 @@ namespace WasmBenchmarkResults
         SortedDictionary<DateTimeOffset, ResultsData> timedPaths = new();
         HashSet<string> flavors = new();
         static string? AddPath = null;
+        static bool AddCSV = false;
         static string IndexPath = "measurements/index.zip";
         readonly string IndexJsonFilename = "index.json";
         public static bool Verbose = false;
@@ -41,8 +42,16 @@ namespace WasmBenchmarkResults
 
             FindAllResults("measurements");
 
-            foreach (string flavor in flavors)
-                ExportCSV($"csv/results.{flavor}.csv", flavor);
+            if (AddCSV)
+            {
+                foreach (string flavor in flavors)
+                {
+                    if (!Directory.Exists("csv"))
+                        Directory.CreateDirectory("csv");
+
+                    ExportCSV($"csv/results.{flavor}.csv", flavor);
+                }
+            }
 
             GenerateReadme();
             GenerateIndex();
@@ -208,7 +217,16 @@ namespace WasmBenchmarkResults
 
         void GenerateReadme()
         {
-            var intro = File.ReadAllText("README.md.in");
+            var readme = "README.md.in";
+            if (!File.Exists(readme))
+            {
+                if (Verbose)
+                    Console.WriteLine($"{readme} file not found, it will not be updated");
+
+                return;
+            }
+
+            var intro = File.ReadAllText(readme);
             using (var sw = new StreamWriter("README.md"))
             {
                 sw.Write(intro);
@@ -232,6 +250,9 @@ namespace WasmBenchmarkResults
                 { "a|add-measurements=",
                     "Add measurements under the {PATH}",
                     v => AddPath = v },
+                { "c|add-csv-files",
+                    "Add CSV files with measurements",
+                    v => AddCSV = true },
                 { "i|index-path=",
                     "Specify index {PATH}, measurements/index.zip is the default value",
                     v => IndexPath = v },
