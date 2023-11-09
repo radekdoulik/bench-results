@@ -120,7 +120,7 @@ namespace WasmBenchmarkResults
         {
             var combined = Path.Combine(path, name);
             if (File.Exists(combined))
-                sizes[measurementsMap[$"Size, {name}"]] = GetDirectorySize(new DirectoryInfo(combined));
+                sizes[measurementsMap[$"Size, {name}"]] = new FileInfo(combined).Length;
         }
 
         static Dictionary<int, long> GetSizes(string path, IdMap measurementsMap)
