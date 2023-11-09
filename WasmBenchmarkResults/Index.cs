@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace WasmBenchmarkResults
 {
@@ -105,6 +106,20 @@ namespace WasmBenchmarkResults
             return ret;
         }
 
+        static void TryAddSizeOfDirectory(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap)
+        {
+            var combined = Path.Combine(path, name);
+            if (Directory.Exists(combined))
+                sizes[measurementsMap[$"Size, {name}"]] = GetDirectorySize(new DirectoryInfo(combined));
+        }
+
+        static void TryAddSizeOfFile(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap)
+        {
+            var combined = Path.Combine(path, name);
+            if (File.Exists(combined))
+                sizes[measurementsMap[$"Size, {name}"]] = GetDirectorySize(new DirectoryInfo(combined));
+        }
+
         static Dictionary<int, long> GetSizes(string path, IdMap measurementsMap)
         {
             if (Program.Verbose)
@@ -116,18 +131,12 @@ namespace WasmBenchmarkResults
             var sizes = new Dictionary<int, long>();
             var ignoredFiles = new HashSet<string> { "results.html", "results.json" };
             sizes[measurementsMap["Size, AppBundle"]] = GetDirectorySize(new DirectoryInfo(path), ignoredFiles);
-            if (Directory.Exists(Path.Combine(path, "managed")))
-                sizes[measurementsMap["Size, managed"]] = GetDirectorySize(new DirectoryInfo(Path.Combine(path, "managed")));
-            if (Directory.Exists(Path.Combine(path, "_framework")))
-                sizes[measurementsMap["Size, _framework"]] = GetDirectorySize(new DirectoryInfo(Path.Combine(path, "_framework")));
-            if (File.Exists(Path.Combine(path, "dotnet.wasm")))
-                sizes[measurementsMap["Size, dotnet.wasm"]] = new FileInfo(Path.Combine(path, "dotnet.wasm")).Length;
-            if (File.Exists(Path.Combine(path, "dotnet.native.wasm")))
-                sizes[measurementsMap["Size, dotnet.native.wasm"]] = new FileInfo(Path.Combine(path, "dotnet.native.wasm")).Length;
-            if (File.Exists(Path.Combine(path, "icudt.dat")))
-                sizes[measurementsMap["Size, icudt.dat"]] = new FileInfo(Path.Combine(path, "icudt.dat")).Length;
-            if (File.Exists(Path.Combine(path, "icudt_no_CJK.dat")))
-                sizes[measurementsMap["Size, icudt_no_CJK.dat"]] = new FileInfo(Path.Combine(path, "icudt_no_CJK.dat")).Length;
+            TryAddSizeOfDirectory(path, "managed", sizes, measurementsMap);
+            TryAddSizeOfDirectory(path, "_framework", sizes, measurementsMap);
+            TryAddSizeOfFile(path, "dotnet.wasm", sizes, measurementsMap);
+            TryAddSizeOfFile(path, "dotnet.native.wasm", sizes, measurementsMap);
+            TryAddSizeOfFile(path, "icudt.dat", sizes, measurementsMap);
+            TryAddSizeOfFile(path, "icudt_no_CJK.dat", sizes, measurementsMap);
 
             return sizes;
         }
