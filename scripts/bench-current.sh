@@ -556,7 +556,21 @@ then
 	git commit -m "Add results for: $LOG_HASH_DATE"
 	echo Push to repo
 	git push
-	echo Result: $?
+	push_result=$?
+	echo Result: ${push_result}
+	if [ "${push_result}" -gt 0 ]
+	then
+		echo Recovering from failed push of $HASH
+		cd $RESULTS_DIR/../..
+		failed_dir="failed_pushes"
+		mkdir -p ${failed_dir}
+		mv measurements/$HASH ${failed_dir}/
+		git reset HEAD~1
+		git checkout measurements/index2.zip measurements/latest.txt measurements/slices
+		git stash
+		git pull -r
+		echo Recovery pull result $?
+	fi
 fi
 
 clean_environment
