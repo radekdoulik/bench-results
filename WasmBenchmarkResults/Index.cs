@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace WasmBenchmarkResults
@@ -114,27 +115,29 @@ namespace WasmBenchmarkResults
             return ret;
         }
 
-        static void TryAddSizeOfDirectory(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap)
+        static void TryAddSizeOfDirectory(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap, string basePath = "")
         {
             var combined = Path.Combine(path, name);
+
             if (Directory.Exists(combined))
             {
-                var key = $"Size, {name}";
+                var prefix = string.IsNullOrEmpty(basePath) ? string.Empty : $"{basePath}/";
+                var key = $"Size, {prefix}{name}";
                 sizes[measurementsMap[key]] = GetDirectorySize(new DirectoryInfo(combined));
                 if (Program.Verbose)
-                    Console.WriteLine($"  dir name: {name} size: {sizes[measurementsMap[key]]}");
+                    Console.WriteLine($"  dir path: {path} name: {name} size: {sizes[measurementsMap[key]]} key: {key}");
             }
         }
 
-        static void TryAddSizeOfFile(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap)
+        static void TryAddSizeOfFile(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap, string basePath = "")
         {
             var combined = Path.Combine(path, name);
             if (File.Exists(combined))
             {
-                var key = $"Size, {name}";
+                var key = $"Size, {basePath}/{name}";
                 sizes[measurementsMap[key]] = new FileInfo(combined).Length;
                 if (Program.Verbose)
-                    Console.WriteLine($"  file name: {name} size: {sizes[measurementsMap[key]]}");
+                    Console.WriteLine($"  file path: {path} name: {name} size: {sizes[measurementsMap[key]]} key: {key}");
             }
         }
 
@@ -148,7 +151,11 @@ namespace WasmBenchmarkResults
 
             var sizes = new Dictionary<int, long>();
             var ignoredFiles = new HashSet<string> { "results.html", "results.json" };
-            sizes[measurementsMap["Size, AppBundle"]] = GetDirectorySize(new DirectoryInfo(path), ignoredFiles);
+            var ignoredDirectories = new HashSet<string> { "browser-template", "blazor-template" };
+            var size = sizes[measurementsMap["Size, AppBundle"]] = GetDirectorySize(new DirectoryInfo(path), ignoredFiles, ignoredDirectories);
+            if (Program.Verbose)
+                Console.WriteLine($"  size of AppBundle: {size}");
+
             TryAddSizeOfDirectory(path, "managed", sizes, measurementsMap);
             TryAddSizeOfDirectory(path, "_framework", sizes, measurementsMap);
             TryAddSizeOfFile(path, "dotnet.wasm", sizes, measurementsMap);
@@ -156,16 +163,48 @@ namespace WasmBenchmarkResults
             TryAddSizeOfFile(path, "icudt.dat", sizes, measurementsMap);
             TryAddSizeOfFile(path, "icudt_no_CJK.dat", sizes, measurementsMap);
 
+            AddSizeOfDirectory(path, "blazor-template", sizes, measurementsMap);
+            AddSizeOfDirectory(path, "browser-template", sizes, measurementsMap);
+
             return sizes;
         }
 
-        static long GetDirectorySize(DirectoryInfo di, HashSet<string> ignoredFiles = null)
+        static void AddSizeOfDirectory(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap, string basePath="")
+        {
+            if (!Directory.Exists(path))
+                return;
+
+            var combined = Path.Combine(path, basePath);
+            var dir = Path.Combine(combined, name);
+            if (!Directory.Exists(combined) || !Directory.Exists(dir))
+                return;
+
+            var di = new DirectoryInfo(dir);
+            TryAddSizeOfDirectory(combined, name, sizes, measurementsMap, basePath);
+
+            foreach (var fi in di.EnumerateFiles())
+            {
+                TryAddSizeOfFile(dir, fi.Name, sizes, measurementsMap, Path.Combine(basePath, di.Name));
+            }
+
+            foreach (var cdi in di.EnumerateDirectories())
+            {
+                AddSizeOfDirectory(path, cdi.Name, sizes, measurementsMap, Path.Combine(basePath, name));
+            }
+        }
+
+        static long GetDirectorySize(DirectoryInfo di, HashSet<string>? ignoredFiles = null, HashSet<string>? ignoredDirectories = null)
         {
             long size = 0;
             size += di.EnumerateFiles().Sum(f => (ignoredFiles != null && ignoredFiles.Contains($"{f.Name}.{f.Extension}")) ? 0 : f.Length);
 
             foreach (var si in di.EnumerateDirectories())
+            {
+                if (ignoredDirectories != null && ignoredDirectories.Contains(si.Name))
+                    continue;
+
                 size += GetDirectorySize(si);
+            }
 
             return size;
         }
