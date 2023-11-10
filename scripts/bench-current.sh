@@ -365,10 +365,11 @@ build_sample() {
     cd ${repo_folder}
 
     FLAVOR_RESULTS_DIR=${RESULTS_DIR}/${sample_flavor_dir}
-    APPBUNDLE_COPY_DIR=${FLAVOR_RESULTS_DIR}/AppBundle
-    echo Copy ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle to ${APPBUNDLE_COPY_DIR}/
-    mkdir ${APPBUNDLE_COPY_DIR}
-    cp -lrv ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle ${APPBUNDLE_COPY_DIR}/
+    APPBUNDLE_COPY=${FLAVOR_RESULTS_DIR}/AppBundle
+    echo Copy ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle to ${APPBUNDLE_COPY}
+    mkdir -p ${FLAVOR_RESULTS_DIR}
+    cp -lrv ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle ${FLAVOR_RESULTS_DIR}/
+    du -sh ${APPBUNDLE_COPY}
 
     echo Build bench sample done
 }
