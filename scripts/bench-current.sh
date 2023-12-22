@@ -22,22 +22,30 @@ clean_environment()
 }
 
 fix_emscripten_env() {
-    if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.30" ]
+    if [ -f src/mono/wasm/emscripten-version.txt ]
     then
-	echo Using local 3.1.30 emscripten instead of prebuilt
-	export EMSDK_PATH=/home/rodo/git/emsdk-3130
-	export LD_LIBRARY_PATH=/home/rodo/git/binaryen/lib
-	export PATH=/home/rodo/git/emscripten:$PATH
-	emscripten_provisioned=1
+        emscripten_version=`cat src/mono/wasm/emscripten-version.txt`
+    else
+        emscripten_version=`cat src/mono/browser/emscripten-version.txt`
     fi
-    if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.34" ]
+    if [ "${emscripten_version}" == "3.1.30" ]
     then
-	echo Using local 3.1.34 emscripten instead of prebuilt
-	export EMSDK_PATH=/home/rodo/git/emsdk-3134
-	export LD_LIBRARY_PATH=/home/rodo/git/binaryen-3134/lib
-	export PATH=/home/rodo/git/emscripten-3134:$PATH
-	emscripten_provisioned=1
+        echo Using local 3.1.30 emscripten instead of prebuilt
+        export EMSDK_PATH=/home/rodo/git/emsdk-3130
+        export LD_LIBRARY_PATH=/home/rodo/git/binaryen/lib
+        export PATH=/home/rodo/git/emscripten:$PATH
+        emscripten_provisioned=1
     fi
+    if [ "${emscripten_version}" == "3.1.34" ]
+    then
+        echo Using local 3.1.34 emscripten instead of prebuilt
+        export EMSDK_PATH=/home/rodo/git/emsdk-3134
+        export LD_LIBRARY_PATH=/home/rodo/git/binaryen-3134/lib
+        export PATH=/home/rodo/git/emscripten-3134:$PATH
+        emscripten_provisioned=1
+    fi
+    echo Emscripten version: ${emscripten_version}
+    echo Emscripten    path: ${EMSDK_PATH}
 }
 
 git_pull() {
