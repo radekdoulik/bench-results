@@ -19,6 +19,7 @@ clean_environment()
     separate_folder=0
     dont_commit=0
     emscripten_provisioned=0
+    mt_only=0
 }
 
 fix_emscripten_env() {
@@ -105,6 +106,11 @@ prepare_tree() {
 		echo Additional URL suffix $1
 		url_suffix=$1
 		shift
+		;;
+	    -t)
+		shift
+		echo Multithreaded only
+		mt_only=1
 		;;
             *)
                 echo Build for date $1
@@ -233,7 +239,7 @@ build_runtime() {
     retries=0
     while true; do
 	killall dotnet
-        ./build.sh -bl -os Browser -subset mono+libs+packs -c Release
+        ./build.sh -bl -os Browser -subset mono+libs+packs -c Release $1
 	build_exit_code=$?
 	[ $build_exit_code -eq 0 ] && break;
         if [ $retries -gt 2 ]; then
@@ -248,7 +254,7 @@ build_runtime() {
     ./dotnet.sh build -c Release src/mono/sample/wasm/simple-server/HttpServer.csproj
 
     echo Build WBT
-    ./dotnet.sh build src/mono/wasm/Wasm.Build.Tests/Wasm.Build.Tests.csproj -bl -c Release -t:Test -p:TargetOS=browser -p:TargetArchitecture=wasm -p:XUnitClassName=none
+    ./dotnet.sh build src/mono/wasm/Wasm.Build.Tests/Wasm.Build.Tests.csproj -bl -c Release -t:Test -p:TargetOS=browser -p:TargetArchitecture=wasm -p:XUnitClassName=none $1 $2
 
     echo Prepare blazor-frame build
     cd ${repo_folder}/src/mono/sample/wasm/blazor-frame
@@ -331,53 +337,56 @@ build_sample() {
     #./dotnet.sh build -c Release /t:BuildSampleInTree $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
     ${build_cmd}
 
-    echo Build the blazor-frame
+    if [ ${mt_only} -lt 1 ]
+    then
+	echo Build the blazor-frame
 
-    export DOTNET_ROOT=${repo_folder}/artifacts/bin/dotnet-latest
-    export PATH="${DOTNET_ROOT}:${PATH}"
+        export DOTNET_ROOT=${repo_folder}/artifacts/bin/dotnet-latest
+        export PATH="${DOTNET_ROOT}:${PATH}"
 
-    cd ${repo_folder}/src/mono/sample/wasm/blazor-frame
-    rm -rf bin obj
-    old_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-    unset LD_LIBRARY_PATH
-    echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-    echo dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
-    dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
-    export LD_LIBRARY_PATH=${old_LD_LIBRARY_PATH}
-    echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+        cd ${repo_folder}/src/mono/sample/wasm/blazor-frame
+        rm -rf bin obj
+        old_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+        unset LD_LIBRARY_PATH
+        echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+        echo dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
+        dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
+        export LD_LIBRARY_PATH=${old_LD_LIBRARY_PATH}
+        echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 
-    echo Link blazor-frame
-    cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
-    ln -s ${repo_folder}/src/mono/sample/wasm/blazor-frame/bin/Release/net8.0/publish/wwwroot/blazor-template .
-    echo ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/blazor-template
-    ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/blazor-template
-    cd ${repo_folder}
+        echo Link blazor-frame
+        cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
+        ln -s ${repo_folder}/src/mono/sample/wasm/blazor-frame/bin/Release/net8.0/publish/wwwroot/blazor-template .
+        echo ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/blazor-template
+        ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/blazor-template
+        cd ${repo_folder}
 
-    echo Build the browser-frame
+        echo Build the browser-frame
 
-    cd ${repo_folder}/src/mono/sample/wasm/browser-frame
-    rm -rf bin obj
-    old_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-    unset LD_LIBRARY_PATH
-    echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-    echo dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
-    dotnet publish -c Release -p:WBTOverrideRuntimePack=true -p:PublishTrimmed=true $@
-    export LD_LIBRARY_PATH=${old_LD_LIBRARY_PATH}
-    echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+        cd ${repo_folder}/src/mono/sample/wasm/browser-frame
+        rm -rf bin obj
+        old_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+        unset LD_LIBRARY_PATH
+        echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+        echo dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
+        dotnet publish -c Release -p:WBTOverrideRuntimePack=true -p:PublishTrimmed=true $@
+        export LD_LIBRARY_PATH=${old_LD_LIBRARY_PATH}
+        echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 
-    echo Link browser-frame
-    cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
-    ln -s ${repo_folder}/src/mono/sample/wasm/browser-frame/bin/Release/net8.0/publish/wwwroot ./browser-template
-    echo ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/browser-template
-    ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/browser-template
-    cd ${repo_folder}
+        echo Link browser-frame
+        cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
+        ln -s ${repo_folder}/src/mono/sample/wasm/browser-frame/bin/Release/net8.0/publish/wwwroot ./browser-template
+        echo ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/browser-template
+        ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/browser-template
+        cd ${repo_folder}
 
-    FLAVOR_RESULTS_DIR=${RESULTS_DIR}/${sample_flavor_dir}
-    APPBUNDLE_COPY=${FLAVOR_RESULTS_DIR}/AppBundle
-    echo Copy ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle to ${APPBUNDLE_COPY}
-    mkdir -p ${FLAVOR_RESULTS_DIR}
-    cp -lrv ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle ${FLAVOR_RESULTS_DIR}/
-    du -sh ${APPBUNDLE_COPY}
+        FLAVOR_RESULTS_DIR=${RESULTS_DIR}/${sample_flavor_dir}
+        APPBUNDLE_COPY=${FLAVOR_RESULTS_DIR}/AppBundle
+        echo Copy ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle to ${APPBUNDLE_COPY}
+        mkdir -p ${FLAVOR_RESULTS_DIR}
+        cp -lrv ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle ${FLAVOR_RESULTS_DIR}/
+        du -sh ${APPBUNDLE_COPY}
+    fi
 
     echo Build bench sample done
 }
@@ -404,8 +413,14 @@ run_sample_start() {
     echo Start http server in `pwd`
     rm -f server.log
     server_wait_time=0
+    if [ ${mt_only} -gt 0 ]
+    then
+        uexclusions="?exclusions=AppStart:.*cold,JSInterop:.*Task,WebSocket"
+        texclusions=-s "$uexclusions"
+    fi
+
     # ~/simple-server/bin/Release/net8.0/HttpServer > server.log &
-    ${repo_folder}/src/mono/sample/wasm/simple-server/bin/Release/net8.0/HttpServer > server.log &
+    ${repo_folder}/src/mono/sample/wasm/simple-server/bin/Release/net8.0/HttpServer $texclusions > server.log &
 
     until [ -f server.log ]
     do
@@ -417,14 +432,15 @@ run_sample_start() {
         fi
     done
     BENCH_URL=`head -1 server.log | sed -e 's/Listening on //'`
-    echo Url: $BENCH_URL$4${url_suffix}
+    complete_url=$BENCH_URL$4${url_suffix}${uexclusions}
+    echo Url: $complete_url
     if [ "$3" == "firefox" ]; then
         private_arg="--private-window"
     else
         private_arg="--incognito"
     fi
-    echo Start $3 $private_arg $BENCH_URL$4${url_suffix} &
-    DISPLAY=:0 $3 $private_arg $BENCH_URL$4${url_suffix} &
+    echo Start $3 $private_arg ${complete_url} &
+    DISPLAY=:0 $3 $private_arg ${complete_url} &
 }
 
 run_sample() {
@@ -501,51 +517,68 @@ then
     exit 0
 fi
 
-build_runtime
-
 snapshot_node="-p:WasmMemorySnapshotNodeExecutable=\"`which node`\""
 
-sample_flavor_dir=aot/default
-build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="${snapshot_node}"
-if [ ${build_only} -gt 0 ]
+if [ ${mt_only} -lt 1 ]
 then
-    echo Build done
-    exit 0
-fi
+    build_runtime
 
-run_sample ${sample_flavor_dir}/chrome chrome chromium
-run_sample ${sample_flavor_dir}/firefox firefox firefox
+    sample_flavor_dir=aot/default
+    build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="${snapshot_node}"
+    if [ ${build_only} -gt 0 ]
+    then
+        echo Build done
+        exit 0
+    fi
 
-if [ ! ${default_flavor_only} -gt 0 ]
-then
+    run_sample ${sample_flavor_dir}/chrome chrome chromium
+    run_sample ${sample_flavor_dir}/firefox firefox firefox
+
+    if [ ! ${default_flavor_only} -gt 0 ]
+    then
     sample_flavor_dir=aot/legacy
 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=false%20-p:WasmEnableSIMD=false%20${snapshot_node} -p:WasmExceptionHandling=false%20-p:WasmEnableExceptionHandling=false%20"
 	run_sample ${sample_flavor_dir}/chrome chrome chromium
 	run_sample ${sample_flavor_dir}/firefox firefox firefox
 
-#   sample_flavor_dir=aot/wasm-eh
-# 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
-# 	run_sample aot/wasm-eh/chrome chrome chromium
-# 	run_sample aot/wasm-eh/firefox firefox firefox
+    #   sample_flavor_dir=aot/wasm-eh
+    # 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
+    # 	run_sample aot/wasm-eh/chrome chrome chromium
+    # 	run_sample aot/wasm-eh/firefox firefox firefox
 
-    sample_flavor_dir=aot/hybrid-globalization
-	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
-	run_sample ${sample_flavor_dir}/chrome chrome chromium "?task=String"
-#	run_sample aot/hybrid-globalization/firefox firefox firefox "?task=String"   firefox is missing Intl.segmenter
+        sample_flavor_dir=aot/hybrid-globalization
+        build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
+        run_sample ${sample_flavor_dir}/chrome chrome chromium "?task=String"
+    #	run_sample aot/hybrid-globalization/firefox firefox firefox "?task=String"   firefox is missing Intl.segmenter
 
-    sample_flavor_dir=interp/hybrid-globalization
-	build_sample -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
-	run_sample ${sample_flavor_dir}/chrome chrome chromium "?task=String"
+        sample_flavor_dir=interp/hybrid-globalization
+        build_sample -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
+        run_sample ${sample_flavor_dir}/chrome chrome chromium "?task=String"
 
-#	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
-#	run_sample aot/simd+wasm-eh/chrome chrome chromium
-#	run_sample aot/simd+wasm-eh/firefox firefox firefox
-fi
+        #	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
+        #	run_sample aot/simd+wasm-eh/chrome chrome chromium
+        #	run_sample aot/simd+wasm-eh/firefox firefox firefox
+    fi
 
-sample_flavor_dir=interp/default
-build_sample -p:RunAOTCompilation=false
-run_sample ${sample_flavor_dir}/chrome chrome chromium
-run_sample ${sample_flavor_dir}/firefox firefox firefox
+    sample_flavor_dir=interp/default
+    build_sample -p:RunAOTCompilation=false
+    run_sample ${sample_flavor_dir}/chrome chrome chromium
+    run_sample ${sample_flavor_dir}/firefox firefox firefox
+else # MT
+    build_runtime -p:MonoWasmBuildVariant=multithread -p:WasmEnableThreads=true
+
+#    build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="${snapshot_node} -p:WasmEnableThreads=true"
+    if [ ${build_only} -gt 0 ]
+    then
+	echo Build done
+	exit 0
+    fi
+
+    sample_flavor_dir=interp/threads
+    build_sample -p:RunAOTCompilation=false -p:BuildAdditionalArgs="-p:WasmEnableThreads=true"
+    run_sample ${sample_flavor_dir}/chrome chrome chromium
+    #run_sample ${sample_flavor_dir}/firefox firefox firefox
+fi #MT
 
 cd $RESULTS_DIR/../..
 #find measurements -name results.json | grep -v AppBundle > measurements/jsonDataFiles.txt
