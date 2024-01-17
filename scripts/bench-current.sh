@@ -6,6 +6,7 @@ clean_environment()
     killall firefox
     killall dotnet
     killall HttpServer
+    sudo killall Xorg
     sleep 2
     killall -9 chrome
     killall -9 firefox
@@ -448,6 +449,8 @@ run_sample() {
 	echo Skip $3
 	return;
     fi
+    sudo killall Xorg
+    sleep 3
     rm -f bootstrap.flag
     run_sample_start $@
     retries=0
