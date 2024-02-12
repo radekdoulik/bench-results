@@ -332,62 +332,72 @@ build_sample() {
     rm -rf artifacts/obj/mono/Wasm.Browser.Bench.Sample
     rm -rf src/mono/sample/wasm/browser-bench/bin
     echo Cleaned old build
+
+    echo Fix library path
+    old_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+    unset LD_LIBRARY_PATH
+    echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+
     ls src/mono/sample/wasm/browser-bench/bin
     build_cmd="./dotnet.sh build -c Release /t:BuildSampleInTree -p:WasmMemorySnapshotNodeExecutable=\"`which node`\" $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj"
     echo ${build_cmd}
     #./dotnet.sh build -c Release /t:BuildSampleInTree $@ src/mono/sample/wasm/browser-bench/Wasm.Browser.Bench.Sample.csproj
     ${build_cmd}
 
-    if [ ${mt_only} -lt 1 ]
-    then
-	echo Build the blazor-frame
+    echo Restored library path
+    export LD_LIBRARY_PATH=${old_LD_LIBRARY_PATH}
+    echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 
-        export DOTNET_ROOT=${repo_folder}/artifacts/bin/dotnet-latest
-        export PATH="${DOTNET_ROOT}:${PATH}"
+    # if [ ${mt_only} -lt 1 ]
+    # then
+	# echo Build the blazor-frame
 
-        cd ${repo_folder}/src/mono/sample/wasm/blazor-frame
-        rm -rf bin obj
-        old_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-        unset LD_LIBRARY_PATH
-        echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-        echo dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
-        dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
-        export LD_LIBRARY_PATH=${old_LD_LIBRARY_PATH}
-        echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+    #     export DOTNET_ROOT=${repo_folder}/artifacts/bin/dotnet-latest
+    #     export PATH="${DOTNET_ROOT}:${PATH}"
 
-        echo Link blazor-frame
-        cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
-        ln -s ${repo_folder}/src/mono/sample/wasm/blazor-frame/bin/Release/net8.0/publish/wwwroot/blazor-template .
-        echo ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/blazor-template
-        ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/blazor-template
-        cd ${repo_folder}
+    #     cd ${repo_folder}/src/mono/sample/wasm/blazor-frame
+    #     rm -rf bin obj
+    #     old_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+    #     unset LD_LIBRARY_PATH
+    #     echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+    #     echo dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
+    #     dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
+    #     export LD_LIBRARY_PATH=${old_LD_LIBRARY_PATH}
+    #     echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 
-        echo Build the browser-frame
+    #     echo Link blazor-frame
+    #     cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
+    #     ln -s ${repo_folder}/src/mono/sample/wasm/blazor-frame/bin/Release/net8.0/publish/wwwroot/blazor-template .
+    #     echo ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/blazor-template
+    #     ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/blazor-template
+    #     cd ${repo_folder}
 
-        cd ${repo_folder}/src/mono/sample/wasm/browser-frame
-        rm -rf bin obj
-        old_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-        unset LD_LIBRARY_PATH
-        echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-        echo dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
-        dotnet publish -c Release -p:WBTOverrideRuntimePack=true -p:PublishTrimmed=true $@
-        export LD_LIBRARY_PATH=${old_LD_LIBRARY_PATH}
-        echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+    #     echo Build the browser-frame
 
-        echo Link browser-frame
-        cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
-        ln -s ${repo_folder}/src/mono/sample/wasm/browser-frame/bin/Release/net8.0/publish/wwwroot ./browser-template
-        echo ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/browser-template
-        ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/browser-template
-        cd ${repo_folder}
+    #     cd ${repo_folder}/src/mono/sample/wasm/browser-frame
+    #     rm -rf bin obj
+    #     old_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+    #     unset LD_LIBRARY_PATH
+    #     echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+    #     echo dotnet publish -c Release -p:WBTOverrideRuntimePack=true $@
+    #     dotnet publish -c Release -p:WBTOverrideRuntimePack=true -p:PublishTrimmed=true $@
+    #     export LD_LIBRARY_PATH=${old_LD_LIBRARY_PATH}
+    #     echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 
-        FLAVOR_RESULTS_DIR=${RESULTS_DIR}/${sample_flavor_dir}
-        APPBUNDLE_COPY=${FLAVOR_RESULTS_DIR}/AppBundle
-        echo Copy ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle to ${APPBUNDLE_COPY}
-        mkdir -p ${FLAVOR_RESULTS_DIR}
-        cp -lrv ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle ${FLAVOR_RESULTS_DIR}/
-        du -sh ${APPBUNDLE_COPY}
-    fi
+    #     echo Link browser-frame
+    #     cd ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle
+    #     ln -s ${repo_folder}/src/mono/sample/wasm/browser-frame/bin/Release/net8.0/publish/wwwroot ./browser-template
+    #     echo ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/browser-template
+    #     ls ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle/browser-template
+    #     cd ${repo_folder}
+
+    #     FLAVOR_RESULTS_DIR=${RESULTS_DIR}/${sample_flavor_dir}
+    #     APPBUNDLE_COPY=${FLAVOR_RESULTS_DIR}/AppBundle
+    #     echo Copy ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle to ${APPBUNDLE_COPY}
+    #     mkdir -p ${FLAVOR_RESULTS_DIR}
+    #     cp -lrv ${repo_folder}/src/mono/sample/wasm/browser-bench/bin/Release/AppBundle ${FLAVOR_RESULTS_DIR}/
+    #     du -sh ${APPBUNDLE_COPY}
+    # fi
 
     echo Build bench sample done
 }
@@ -520,6 +530,7 @@ then
     exit 0
 fi
 
+startup_props="-p:BlazorStartup=true -p:BrowserStartup=true"
 snapshot_node="-p:WasmMemorySnapshotNodeExecutable=\"`which node`\""
 
 if [ ${mt_only} -lt 1 ]
@@ -527,7 +538,7 @@ then
     build_runtime
 
     sample_flavor_dir=aot/default
-    build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="${snapshot_node}"
+    build_sample -p:RunAOTCompilation=true ${startup_props} -p:BuildAdditionalArgs="${snapshot_node}%20-p:RunAOTCompilation=true"
     if [ ${build_only} -gt 0 ]
     then
         echo Build done
@@ -540,37 +551,37 @@ then
     if [ ! ${default_flavor_only} -gt 0 ]
     then
     sample_flavor_dir=aot/legacy
-	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=false%20-p:WasmEnableSIMD=false%20${snapshot_node} -p:WasmExceptionHandling=false%20-p:WasmEnableExceptionHandling=false%20"
+	build_sample -p:RunAOTCompilation=true ${startup_props} -p:BuildAdditionalArgs="-p:RunAOTCompilation=true%20-p:WasmSIMD=false%20-p:WasmEnableSIMD=false%20${snapshot_node}%20-p:WasmExceptionHandling=false%20-p:WasmEnableExceptionHandling=false%20"
 	run_sample ${sample_flavor_dir}/chrome chrome chromium
 	run_sample ${sample_flavor_dir}/firefox firefox firefox
 
     #   sample_flavor_dir=aot/wasm-eh
-    # 	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
+    # 	build_sample -p:RunAOTCompilation=true ${startup_props} -p:BuildAdditionalArgs="-p:RunAOTCompilation=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
     # 	run_sample aot/wasm-eh/chrome chrome chromium
     # 	run_sample aot/wasm-eh/firefox firefox firefox
 
         sample_flavor_dir=aot/hybrid-globalization
-        build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
+        build_sample -p:RunAOTCompilation=true ${startup_props} -p:BuildAdditionalArgs="-p:RunAOTCompilation=true%20-p:HybridGlobalization=true"
         run_sample ${sample_flavor_dir}/chrome chrome chromium "?task=String"
     #	run_sample aot/hybrid-globalization/firefox firefox firefox "?task=String"   firefox is missing Intl.segmenter
 
         sample_flavor_dir=interp/hybrid-globalization
-        build_sample -p:BuildAdditionalArgs="-p:HybridGlobalization=true"
+        build_sample ${startup_props} -p:BuildAdditionalArgs="$-p:HybridGlobalization=true"
         run_sample ${sample_flavor_dir}/chrome chrome chromium "?task=String"
 
-        #	build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
+        #	build_sample -p:RunAOTCompilation=true ${startup_props} -p:BuildAdditionalArgs="-p:WasmSIMD=true%20-p:WasmEnableSIMD=true%20-p:WasmExceptionHandling=true%20-p:WasmEnableExceptionHandling=true%20${snapshot_node}"
         #	run_sample aot/simd+wasm-eh/chrome chrome chromium
         #	run_sample aot/simd+wasm-eh/firefox firefox firefox
     fi
 
     sample_flavor_dir=interp/default
-    build_sample -p:RunAOTCompilation=false
+    build_sample -p:RunAOTCompilation=false ${startup_props} -p:BuildAdditionalArgs=""
     run_sample ${sample_flavor_dir}/chrome chrome chromium
     run_sample ${sample_flavor_dir}/firefox firefox firefox
 else # MT
     build_runtime -p:MonoWasmBuildVariant=multithread -p:WasmEnableThreads=true
 
-#    build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="${snapshot_node} -p:WasmEnableThreads=true"
+#    build_sample -p:RunAOTCompilation=true -p:BuildAdditionalArgs="-p:RunAOTCompilation=true%20${snapshot_node}%20-p:WasmEnableThreads=true"
     if [ ${build_only} -gt 0 ]
     then
 	echo Build done
