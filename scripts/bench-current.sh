@@ -254,15 +254,16 @@ build_runtime() {
     echo Build HttpServer
     ./dotnet.sh build -c Release src/mono/sample/wasm/simple-server/HttpServer.csproj
 
-    echo Build WBT
-    ./dotnet.sh build src/mono/wasm/Wasm.Build.Tests/Wasm.Build.Tests.csproj -bl -c Release -t:Test -p:TargetOS=browser -p:TargetArchitecture=wasm -p:XUnitClassName=none $1 $2
+    if [ ${mt_only} -lt 1 ]; then
+        echo Build WBT
+        ./dotnet.sh build src/mono/wasm/Wasm.Build.Tests/Wasm.Build.Tests.csproj -bl -c Release -t:Test -p:TargetOS=browser -p:TargetArchitecture=wasm -p:XUnitClassName=none $1 $2
 
-    echo Prepare blazor-frame build
-    cd ${repo_folder}/src/mono/sample/wasm/blazor-frame
-    cp -v ../../../../../src/mono/wasm/Wasm.Build.Tests/data/WasmOverridePacks.targets .
-    cp -v ../../../../../src/mono/wasm/Wasm.Build.Tests/data/Blazor.Directory.Build.targets Directory.Build.targets
-    # prepare nuget config
-    echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+        echo Prepare blazor-frame build
+        cd ${repo_folder}/src/mono/sample/wasm/blazor-frame
+        cp -v ../../../../../src/mono/wasm/Wasm.Build.Tests/data/WasmOverridePacks.targets .
+        cp -v ../../../../../src/mono/wasm/Wasm.Build.Tests/data/Blazor.Directory.Build.targets Directory.Build.targets
+        # prepare nuget config
+        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <configuration>
   <!-- Don't use any higher level config files. -->
   <fallbackPackageFolders>
@@ -280,38 +281,39 @@ build_runtime() {
 </configuration>
 " > nuget.config
 
-    echo nuget.config:
-    cat nuget.config
+        echo nuget.config:
+        cat nuget.config
 
-    echo Prepare browser-frame build
-    cd ${repo_folder}/src/mono/sample/wasm/browser-frame
-    cp -v ../../../../../src/mono/wasm/Wasm.Build.Tests/data/WasmOverridePacks.targets .
-    cp -v ../../../../../src/mono/wasm/Wasm.Build.Tests/data/Blazor.Directory.Build.targets Directory.Build.targets
-    # prepare nuget config
-    echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>
-<configuration>
-  <!-- Don't use any higher level config files. -->
-  <fallbackPackageFolders>
-    <clear />
-  </fallbackPackageFolders>
-  <packageSources>
-    <clear />
-    <add key=\"nuget-local\" value=\"${repo_folder}/artifacts/packages/Release/Shipping/\" />
-    <add key=\"dotnet8\" value=\"https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json\" />
-    <add key=\"nuget.org\"  value=\"https://api.nuget.org/v3/index.json\" protocolVersion=\"3\" />
-  </packageSources>
-    <disabledPackageSources>
-    <clear />
-  </disabledPackageSources>
-</configuration>
-" > nuget.config
+        echo Prepare browser-frame build
+        cd ${repo_folder}/src/mono/sample/wasm/browser-frame
+        cp -v ../../../../../src/mono/wasm/Wasm.Build.Tests/data/WasmOverridePacks.targets .
+        cp -v ../../../../../src/mono/wasm/Wasm.Build.Tests/data/Blazor.Directory.Build.targets Directory.Build.targets
+        # prepare nuget config
+        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+    <configuration>
+      <!-- Don't use any higher level config files. -->
+      <fallbackPackageFolders>
+        <clear />
+      </fallbackPackageFolders>
+      <packageSources>
+        <clear />
+        <add key=\"nuget-local\" value=\"${repo_folder}/artifacts/packages/Release/Shipping/\" />
+        <add key=\"dotnet8\" value=\"https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json\" />
+        <add key=\"nuget.org\"  value=\"https://api.nuget.org/v3/index.json\" protocolVersion=\"3\" />
+      </packageSources>
+        <disabledPackageSources>
+        <clear />
+      </disabledPackageSources>
+    </configuration>
+    " > nuget.config
 
-    echo nuget.config:
-    cat nuget.config
+        echo nuget.config:
+        cat nuget.config
 
-    echo Prepare dotnet-latest environment
-    export DOTNET_ROOT=${repo_folder}/artifacts/bin/dotnet-latest
-    export PATH="${DOTNET_ROOT}:${PATH}"
+        echo Prepare dotnet-latest environment
+        export DOTNET_ROOT=${repo_folder}/artifacts/bin/dotnet-latest
+        export PATH="${DOTNET_ROOT}:${PATH}"
+    fi
 
     cd ${repo_folder}
 
