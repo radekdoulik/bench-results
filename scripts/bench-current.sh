@@ -435,7 +435,7 @@ run_sample_start() {
     server_wait_time=0
     if [ ${mt_only} -gt 0 ]
     then
-        uexclusions="?exclusions=AppStart:.*cold,JSInterop:.*Task,WebSocket"
+        uexclusions="?exclusions=AppStart:.*cold,JSInterop,WebSocket"
         texclusions=-s "$uexclusions"
     fi
 
