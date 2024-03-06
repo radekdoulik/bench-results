@@ -26,10 +26,11 @@ clean_environment()
 fix_emscripten_env() {
     if [ -f src/mono/wasm/emscripten-version.txt ]
     then
-        emscripten_version=`cat src/mono/wasm/emscripten-version.txt`
+	emscripten_vfile=src/mono/wasm/emscripten-version.txt
     else
-        emscripten_version=`cat src/mono/browser/emscripten-version.txt`
+	emscripten_vfile=src/mono/browser/emscripten-version.txt
     fi
+    emscripten_version=`cat ${emscripten_vfile}`
     if [ "${emscripten_version}" == "3.1.30" ]
     then
         echo Using local 3.1.30 emscripten instead of prebuilt
@@ -214,9 +215,11 @@ prepare_environment() {
     cat /proc/meminfo >> hw-info.txt
     echo === outpuf of: cat /proc/cpuinfo >> hw-info.txt
     cat /proc/cpuinfo >> hw-info.txt
-    cp ${repo_folder}/src/mono/wasm/emscripten-version.txt .
+    cp ${emscripten_vfile} .
+    echo Add browsers versions
     chromium --version 2>&1| tail -1 >> versions.txt
     firefox --version 2>&1| tail -1 >> versions.txt
+    cat versions.txt
     cd -
 
     if [ ! ${measure_only} -gt 0 ]
