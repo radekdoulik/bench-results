@@ -120,7 +120,7 @@ public class Node
         }
 
         State = "Idle";
-        Console.WriteLine($"finished bench of commit {Commit}, bench run took {DateTime.Now - Time}");
+        WriteLine($"finished bench of commit {Commit}, bench run took {DateTime.Now - Time}");
         Time = DateTime.Now;
         Save();
 
