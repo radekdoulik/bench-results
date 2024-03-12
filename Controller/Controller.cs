@@ -108,7 +108,7 @@ public class Controller
                     runs++;
                     PrintTimeFromLastCommit();
                     LastProcessedCommit = commitToProcess;
-                    tasks.Add(node.ProcessCommit(commitToProcess, runs % 5 == 0));
+                    tasks.Add(node.ProcessCommit(commitToProcess, runs % 5 == 0, runs % 5 == 2 ));
                     commitToProcess = "";
                     break;
                 }

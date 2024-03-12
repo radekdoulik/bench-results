@@ -97,7 +97,7 @@ public class Node
         return result;
     }
 
-    public async Task ProcessCommit(string commit, bool allFlavors = false)
+    public async Task ProcessCommit(string commit, bool allFlavors = false, bool threads = false)
     {
         await UpdateScripts();
 
@@ -106,6 +106,9 @@ public class Node
         WriteLine($"starting bench of commit {Commit} on node {Name} allFlavors: {allFlavors}");
 
         var flavors = allFlavors ? "" : "-d ";
+        if (threads)
+            flavors += "-t ";
+
         var args = $"{IP} nohup bash ~/bench-results-tools/scripts/bench-current.sh {flavors}-h {Commit} >> {logFile} 2>&1";
         Command = $"{SshHelper.Command} {args}";
         Time = DateTime.Now;
