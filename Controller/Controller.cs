@@ -5,14 +5,14 @@ namespace Controller;
 
 public class Controller
 {
-    readonly List<Node> nodes = new();
+    readonly List<Node> nodes = [];
     public string lastProcessedCommit = "";
     public string lastQueriedCommit = "";
     public DateTimeOffset lastProcessTime = DateTimeOffset.MinValue;
     public int runs = 0;
 
     [JsonIgnore]
-    readonly List<Task> tasks = new();
+    readonly List<Task> tasks = [];
 
     [JsonIgnore]
     string LastProcessedCommit
@@ -36,7 +36,7 @@ public class Controller
         PrintTimeFromLastCommit();
         SetupNodes();
 
-        List<int> restartedIds = new();
+        List<int> restartedIds = [];
         foreach (var id in restartIds)
         {
             if (RestartNode(id))
@@ -108,7 +108,7 @@ public class Controller
                     runs++;
                     PrintTimeFromLastCommit();
                     LastProcessedCommit = commitToProcess;
-                    tasks.Add(node.ProcessCommit(commitToProcess, runs % 5 == 0, runs % 5 == 2 ));
+                    tasks.Add(node.ProcessCommit(commitToProcess, runs % 5 == 0, runs % 5 == 2));
                     commitToProcess = "";
                     break;
                 }
