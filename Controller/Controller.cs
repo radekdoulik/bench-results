@@ -46,7 +46,7 @@ public class Controller
         foreach (var id in idleIds)
         {
             var node = nodes[id - 1];
-            System.Console.WriteLine($"{ANSIColor.Color(Color.LightBlue)}Setting node {ANSIColor.Color(Color.Yellow)}{node.Name}{ANSIColor.Color(Color.LightBlue)} to idle{ANSIColor.Reset}");
+            WriteLine($"{ANSIColor.Color(Color.LightBlue)}Setting node {ANSIColor.Color(Color.Yellow)}{node.Name}{ANSIColor.Color(Color.LightBlue)} to idle{ANSIColor.Reset}");
             node.State = "Idle";
             node.Save();
         }
@@ -67,11 +67,11 @@ public class Controller
             //Console.WriteLine($"Waiting for {tasks.Count} tasks");
 
             var idx = Task.WaitAny(tasks.ToArray());
-            Console.WriteLine($"Task {idx} finished. Status: {tasks[idx].Status}");
+            WriteLine($"Task {idx} finished. Status: {tasks[idx].Status}");
 
             if (tasks[idx].Exception != null)
             {
-                Console.WriteLine($"Task {idx} failed: {tasks[idx].Exception}");
+                WriteLine($"Task {idx} failed: {tasks[idx].Exception}");
             }
 
             if (tasks[idx] == newCommitTask)
@@ -80,7 +80,7 @@ public class Controller
                 {
                     if (lastProcessTime > DateTimeOffset.Now.AddMinutes(-50))
                     {
-                        Console.WriteLine($"The commit is too recent, waiting (time from the last processed commit: {DateTimeOffset.Now - lastProcessTime} {LastProcessedCommit})");
+                        WriteLine($"The commit is too recent, waiting (time from the last processed commit: {DateTimeOffset.Now - lastProcessTime} {LastProcessedCommit})");
                     }
                     else
                     {
@@ -122,23 +122,23 @@ public class Controller
             var idx = id - 1;
             if (id > nodes.Count || nodes[idx].Id != id)
             {
-                System.Console.WriteLine($"{ANSIColor.Color(Color.Red)}Node {id} does not exist, cannot restart it{ANSIColor.Reset}");
+                WriteLine($"{ANSIColor.Color(Color.Red)}Node {id} does not exist, cannot restart it{ANSIColor.Reset}");
                 return false;
             }
 
             if (nodes[idx].State == "Idle")
             {
-                System.Console.WriteLine($"{ANSIColor.Color(Color.Red)}Node {id} is already idle, cannot restart it{ANSIColor.Reset}");
+                WriteLine($"{ANSIColor.Color(Color.Red)}Node {id} is already idle, cannot restart it{ANSIColor.Reset}");
                 return false;
             }
 
             if (string.IsNullOrEmpty(nodes[idx].Commit))
             {
-                System.Console.WriteLine($"{ANSIColor.Color(Color.Red)}Node {id} does not have a commit to restart, cannot restart it{ANSIColor.Reset}");
+                WriteLine($"{ANSIColor.Color(Color.Red)}Node {id} does not have a commit to restart, cannot restart it{ANSIColor.Reset}");
                 return false;
             }
 
-            System.Console.WriteLine($"{ANSIColor.Color(Color.LightBlue)}Restarting node {id}{ANSIColor.Reset}");
+            WriteLine($"{ANSIColor.Color(Color.LightBlue)}Restarting node {id}{ANSIColor.Reset}");
             tasks.Add(nodes[idx].ProcessCommit(nodes[idx].Commit, false));
 
             return true;
@@ -189,7 +189,7 @@ public class Controller
             }
             catch (System.Text.Json.JsonException e)
             {
-                System.Console.WriteLine($"{ANSIColor.Color(Color.Red)}Error: {e.Message}{ANSIColor.Reset}");
+                WriteLine($"{ANSIColor.Color(Color.Red)}Error: {e.Message}{ANSIColor.Reset}");
                 await Sleep(5);
 
                 continue;
@@ -197,13 +197,13 @@ public class Controller
 
             if (commit != lastQueriedCommit)
             {
-                System.Console.WriteLine($"Latest commit in the repo: {commit}");
+                WriteLine($"Latest commit in the repo: {commit}");
                 lastQueriedCommit = commit;
             }
 
             if (commit != LastProcessedCommit)
             {
-                Console.WriteLine($"The new commit that was not processed yet: {commit}");
+                WriteLine($"The new commit that was not processed yet: {commit}");
                 return commit;
             }
 
@@ -252,7 +252,7 @@ public class Controller
 
     public void PrintStatus()
     {
-        Console.Write($"{ANSIColor.Color(Color.Green)}[c]{ANSIColor.Color(Color.Yellow)} runs: {runs} tasks: {tasks.Count} nodes: {nodes.Count}{ANSIColor.Reset}");
+        Write($"{ANSIColor.Color(Color.Yellow)}runs: {runs} tasks: {tasks.Count} nodes: {nodes.Count}{ANSIColor.Reset}");
         foreach (var node in nodes)
         {
             Console.Write($" {node.Status}");
@@ -262,6 +262,17 @@ public class Controller
 
     public void PrintTimeFromLastCommit()
     {
-        Console.WriteLine($"Time from last benchmark start: {ANSIColor.Color(Color.Yellow)}{DateTimeOffset.Now - lastProcessTime}{ANSIColor.Reset}");
+        WriteLine($"Time from last benchmark start: {ANSIColor.Color(Color.Yellow)}{DateTimeOffset.Now - lastProcessTime}{ANSIColor.Reset}");
+    }
+
+    static void Write(string text)
+    {
+        Console.WriteLine($"{ANSIColor.Color(Color.Green)}[c]{ANSIColor.Reset} {text}");
+    }
+
+    static void WriteLine(string text)
+    {
+        Write($"{ANSIColor.Color(Color.Green)}[c]{ANSIColor.Color(Color.Yellow)} {text}");
+        Console.WriteLine();
     }
 }
