@@ -6,6 +6,8 @@ namespace Controller;
 
 public partial class GithubHelper
 {
+    internal static string? Token { get; set; } = null;
+
     private static readonly HttpClient client = new();
 
     public static readonly string DateFormat = "yyyy-MM-ddTHH:mm:ssZ";
@@ -73,6 +75,9 @@ public partial class GithubHelper
     private static async Task<List<CommitInfo>> GetCommitsFromUrl(string url)
     {
         client.DefaultRequestHeaders.Add("User-Agent", "request");
+        if (Token != null)
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+
         var response = await client.GetAsync(url);
         var json = await response.Content.ReadAsStringAsync();
         var commits = JsonSerializer.Deserialize<List<Commit>?>(json) ?? throw new Exception($"Failed to parse commits from {url}");
