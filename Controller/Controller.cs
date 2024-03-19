@@ -323,7 +323,9 @@ public class Controller
                 ? commits[^1]
                 : commits[idx];
 
-            WriteLine($"Commit in the middle of the largest gap: {gaps[0].Gap}\ncommit: {gaps[0].Commit}\nmiddle: {commitInMiddle}");
+            WriteLine($"Commit in the middle of the largest gap: {gaps[0].Gap}");
+            WriteLine($"  commit: {gaps[0].Commit}");
+            WriteLine($"  middle: {commitInMiddle}");
 
             return commitInMiddle;
         }
@@ -353,12 +355,12 @@ public class Controller
 
     static void Write(string text)
     {
-        Console.WriteLine($"{ANSIColor.Color(Color.Green)}[c]{ANSIColor.Reset} {text}");
+        Console.Write($"{ANSIColor.Color(Color.Green)}[c]{ANSIColor.Reset} {text}");
     }
 
     static void WriteLine(string text)
     {
-        Write($"{ANSIColor.Color(Color.Green)}[c]{ANSIColor.Color(Color.Yellow)} {text}");
-        Console.WriteLine();
+        Write($"{text}");
+        Console.WriteLine(ANSIColor.Reset);
     }
 }
