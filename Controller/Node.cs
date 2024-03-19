@@ -99,11 +99,11 @@ public class Node
 
     public async Task ProcessCommit(string commit, bool allFlavors = false, bool threads = false)
     {
-        await UpdateScripts();
-
         Commit = commit;
         State = "Running";
         WriteLine($"starting bench of commit {Commit} on node {Name} allFlavors: {allFlavors}");
+
+        await UpdateScripts();
 
         var flavors = allFlavors ? "" : "-d ";
         if (threads)
