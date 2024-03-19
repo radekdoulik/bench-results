@@ -4,12 +4,12 @@ namespace Controller;
 
 public class Program
 {
-    public static int Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         var controller = File.Exists("controller.json") ? Controller.Load() : new Controller();
         (var idleIds, var restartIds, var commitToSchedule) = ProcessArguments(args);
 
-        controller.Run(idleIds, restartIds, commitToSchedule);
+        await controller.Run(idleIds, restartIds, commitToSchedule);
 
         return 0;
     }

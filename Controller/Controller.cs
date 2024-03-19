@@ -31,7 +31,7 @@ public class Controller
         await Task.Delay(minutes * 60000);
     }
 
-    public void Run(List<int> idleIds, List<int> restartIds, List<string> commitsToSchedule)
+    public async Task Run(List<int> idleIds, List<int> restartIds, List<string> commitsToSchedule)
     {
         PrintTimeFromLastCommit();
         SetupNodes();
@@ -97,6 +97,19 @@ public class Controller
 
             if (string.IsNullOrEmpty(commitToProcess))
             {
+                if (nodes.Count(n => n.State == "Idle") > 1)
+                {
+                    var idleIdx = nodes.FindIndex(n => n.State == "Idle");
+                    var gap = await FillGap();
+                    if (gap != null)
+                    {
+                        WriteLine($"{ANSIColor.Color(Color.LightBlue)}Run measurement of {gap.Hash} to fill the gap on node {nodes[idleIdx].Id}{ANSIColor.Reset}");
+                        runs++;
+                        Save();
+                        tasks.Add(nodes[idleIdx].ProcessCommit(gap.Hash));
+                    }
+                }
+
                 PrintStatus();
                 continue;
             }
@@ -240,9 +253,82 @@ public class Controller
         string jsonString = File.ReadAllText("controller.json");
         var options = new JsonSerializerOptions { IncludeFields = true };
         var controller = JsonSerializer.Deserialize<Controller>(jsonString, options) ?? throw new Exception($"Failed to load controller.json");
-        Console.WriteLine($"Loaded state: {ANSIColor.Color(Color.Yellow)}{controller}{ANSIColor.Reset}");
+        WriteLine($"Loaded state: {ANSIColor.Color(Color.Yellow)}{controller}{ANSIColor.Reset}");
 
         return controller;
+    }
+
+    async Task<CommitInfo?> FillGap()
+    {
+        var commits = await GithubHelper.GetCommitsInLast14Days("dotnet/runtime");
+        var slice = await GithubHelper.GetIndexDataFromUrl("https://github.com/radekdoulik/WasmPerformanceMeasurements/raw/main/measurements/slices/last.zip");
+
+        if (slice == null)
+        {
+            Console.WriteLine($"{ANSIColor.Color(Color.Red)}Failed to get the slice{ANSIColor.Reset}");
+
+            return null;
+        }
+
+        var measuredCommits = slice.Index.Data.Select(d => new CommitInfo(d.hash, DateTimeOffset.Parse(d.commitTime))).DistinctBy(c => c.Hash).ToList();
+        var running = nodes.Where(n => n.State == "Running").Select(n => n.Commit).ToList();
+        foreach (var commit in running)
+        {
+            var idx = commits.FindIndex(c => c.Hash == commit);
+            if (idx != -1)
+                measuredCommits.Add(commits[idx]);
+        }
+
+        commits.Sort((a, b) => b.Date.CompareTo(a.Date));
+        measuredCommits.Sort((a, b) => b.Date.CompareTo(a.Date));
+
+        // System.Console.WriteLine($"commits {commits.Count}");
+        // foreach(var c in commits)
+        // {
+        //     Console.WriteLine($"{c}");
+        // }
+
+        // System.Console.WriteLine($"measured commits {measuredCommits.Count}");
+        // foreach(var c in measuredCommits)
+        // {
+        //     Console.WriteLine($"{c}");
+        // }
+
+        var commitsHashes = commits.Select(c => c.Hash).ToList();
+        //var measuredCommitsHashes = measuredCommits.Select(c => c.Hash).ToList();
+
+        var gaps = new List<(CommitInfo Commit, int Gap)>();
+        var idx1 = commitsHashes.IndexOf(measuredCommits[0].Hash);
+        for (int i = 0; i < measuredCommits.Count - 1; i++)
+        {
+            var idx2 = commitsHashes.IndexOf(measuredCommits[i + 1].Hash);
+            int gap = idx2 - idx1;
+            //System.Console.WriteLine($"{measuredCommits[i]} gap: {gap} {idx1} {idx2} end: {measuredCommits[i + 1]}");
+
+            if (idx1 != -1 && idx2 != -1)
+            {
+                // System.Console.WriteLine($"add gap, {measuredCommits[i]} gap: {gap} {idx1} {idx2} end: {measuredCommits[i + 1]}");
+                gaps.Add((measuredCommits[i], gap));
+            }
+
+            idx1 = idx2;
+        }
+
+        gaps.Sort((a, b) => b.Gap - a.Gap);
+
+        if (gaps.Count > 0 && gaps[0].Gap > 1)
+        {
+            var idx = commitsHashes.IndexOf(gaps[0].Commit.Hash) + gaps[0].Gap / 2;
+            CommitInfo commitInMiddle = idx >= commits.Count
+                ? commits[^1]
+                : commits[idx];
+
+            WriteLine($"Commit in the middle of the largest gap: {gaps[0].Gap}\ncommit: {gaps[0].Commit}\nmiddle: {commitInMiddle}");
+
+            return commitInMiddle;
+        }
+
+        return null;
     }
 
     public override string ToString()
