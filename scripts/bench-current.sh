@@ -217,8 +217,8 @@ prepare_environment() {
     cat /proc/cpuinfo >> hw-info.txt
     cp ${emscripten_vfile} .
     echo Add browsers versions
-    /snap/chromium/current/usr/lib/chromium-browser/chrome --version 2>&1| tail -1 >> versions.txt
-    /snap/firefox/current/usr/lib/firefox/firefox --version 2>&1| tail -1 >> versions.txt
+    chromium --version 2>&1| tail -1 >> versions.txt
+    firefox --version 2>&1| tail -1 >> versions.txt
     cat versions.txt
     cd -
 
@@ -462,14 +462,8 @@ run_sample_start() {
     else
         private_arg="--incognito"
     fi
-    if [ "$3" == "firefox" ]; then
-        browser="/snap/firefox/current/usr/lib/firefox/firefox"
-    else
-        browser="/snap/chromium/current/usr/lib/chromium-browser/chrome"
-    fi
-
-    echo Start $browser $private_arg ${complete_url} &
-    DISPLAY=:0 $browser $private_arg ${complete_url} &
+    echo Start $3 $private_arg ${complete_url} &
+    DISPLAY=:0 $3 $private_arg ${complete_url} &
 }
 
 run_sample() {
