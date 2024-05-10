@@ -175,22 +175,26 @@ prepare_tree() {
 
     HASH=`git rev-parse HEAD`
 
-    if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.12" ]
+    if ! grep EmsdkVersion eng/Versions.props
     then
-	echo Using 3.1.13 emscripten instead of 3.1.12 - which is not available on arm64 linux
-	echo -n 3.1.13 > src/mono/wasm/emscripten-version.txt
-    fi
-
-    export EMSDK_PATH=${repo_folder}/src/mono/wasm/emsdk
-
-#    if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.30" ]
-#    then
-    fix_emscripten_env
-    if [ ${emscripten_provisioned} -lt 1 ]
-    then
-        cd src/mono/wasm
-        make provision-wasm
-        cd -
+      # need to provision emscripten locally
+      if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.12" ]
+      then
+  	echo Using 3.1.13 emscripten instead of 3.1.12 - which is not available on arm64 linux
+  	echo -n 3.1.13 > src/mono/wasm/emscripten-version.txt
+      fi
+  
+      export EMSDK_PATH=${repo_folder}/src/mono/wasm/emsdk
+  
+  #    if [ "`cat src/mono/wasm/emscripten-version.txt`" == "3.1.30" ]
+  #    then
+      fix_emscripten_env
+      if [ ${emscripten_provisioned} -lt 1 ]
+      then
+          cd src/mono/wasm
+          make provision-wasm
+          cd -
+      fi
     fi
 
     git apply ../runtime.patch
