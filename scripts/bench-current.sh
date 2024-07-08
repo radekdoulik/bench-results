@@ -253,6 +253,7 @@ build_runtime() {
         if [ $retries -gt 2 ]; then
             echo Too many retries $retries
 	    echo Build exit code: $build_exit_code
+	    echo Done
             exit 1
         fi
 	echo Retrying build
