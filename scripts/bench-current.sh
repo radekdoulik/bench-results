@@ -444,10 +444,10 @@ run_sample_start() {
     if [ ${mt_only} -gt 0 ]
     then
         uexclusions="?exclusions=AppStart:.*cold,JSInterop,WebSocket"
-        texclusions=-s "$uexclusions"
+        texclusions="-s \"$uexclusions\""
     else
         uexclusions="?exclusions=WebSocket"
-        texclusions=-s "$uexclusions"
+        texclusions="-s \"$uexclusions\""
     fi
 
     # ~/simple-server/bin/Release/net8.0/HttpServer > server.log &
