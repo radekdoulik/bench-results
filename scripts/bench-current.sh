@@ -451,7 +451,7 @@ run_sample_start() {
     fi
 
     # ~/simple-server/bin/Release/net8.0/HttpServer > server.log &
-    ${repo_folder}/src/mono/sample/wasm/simple-server/bin/Release/net8.0/HttpServer $texclusions > server.log &
+    ${repo_folder}/src/mono/sample/wasm/simple-server/bin/Release/net8.0/HttpServer $texclusions 2>&1 | tee server.log &
 
     until [ -f server.log ]
     do
