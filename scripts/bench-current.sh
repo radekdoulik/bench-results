@@ -446,7 +446,7 @@ run_sample_start() {
         uexclusions="?exclusions=AppStart:.*cold,JSInterop,WebSocket"
         texclusions="-s \"$uexclusions\""
     else
-        uexclusions="?exclusions=WebSocket"
+        uexclusions="?exclusions=WebSocket,JSInterop:.*Task"
         texclusions="-s \"$uexclusions\""
     fi
 
