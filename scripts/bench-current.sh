@@ -341,6 +341,9 @@ build_sample() {
     cd ${repo_folder}
     rm -rf artifacts/obj/mono/Wasm.Browser.Bench.Sample
     rm -rf src/mono/sample/wasm/browser-bench/bin
+
+    rm -rf src/mono/sample/wasm/blazor-frame/blazor/bin
+    rm -rf src/mono/sample/wasm/browser-frame/browser-frame/bin
     echo Cleaned old build
 
     echo Fix library path
