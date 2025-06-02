@@ -301,6 +301,8 @@ namespace WasmBenchmarkResults
                 if (item.sizes != null)
                     item.sizes = FixSizeKeys(item.sizes, newMeasurementMap, newOldMap);
             }
+
+            MeasurementMap = newMeasurementMap;
         }
     }
 }
