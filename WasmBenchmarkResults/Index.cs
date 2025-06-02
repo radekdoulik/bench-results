@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace WasmBenchmarkResults
 {
@@ -55,7 +56,7 @@ namespace WasmBenchmarkResults
             index.FlavorMap = FlavorMap;
             index.MeasurementMap = MeasurementMap;
 
-            var edge = Data[Data.Count -1].commitTime.AddDays(-14);
+            var edge = Data[Data.Count - 1].commitTime.AddDays(-14);
             index.Data = Data.FindAll(i => i.commitTime >= edge);
             index.Sort();
 
@@ -91,15 +92,18 @@ namespace WasmBenchmarkResults
                             iIdx++;
                         }
 
-			if (iIdx >= Data.Count) {
-			    Data.Add(newItem);
-			    if (Program.Verbose)
-			       Console.WriteLine($"Added {fd.flavor} {fd.commitTime}");
-			} else {
-			    Data.Insert(iIdx, newItem);
-			    if (Program.Verbose)
-			       Console.WriteLine($"Updated {fd.flavor} {fd.commitTime}");
-			}
+                        if (iIdx >= Data.Count)
+                        {
+                            Data.Add(newItem);
+                            if (Program.Verbose)
+                                Console.WriteLine($"Added {fd.flavor} {fd.commitTime}");
+                        }
+                        else
+                        {
+                            Data.Insert(iIdx, newItem);
+                            if (Program.Verbose)
+                                Console.WriteLine($"Updated {fd.flavor} {fd.commitTime}");
+                        }
                     }
                     else
                         Data.Add(newItem);
@@ -129,9 +133,59 @@ namespace WasmBenchmarkResults
             }
         }
 
+        static readonly Regex hashRegex = new(@"^[a-z0-9]{10}$", RegexOptions.Compiled);
+
+        static string GetNameForKey(string name)
+        {
+            static int GetHashDotIndex(string name)
+            {
+                var lastDotIndex = name.LastIndexOf('.');
+                var rv = HasHashBeforeIndex(name, lastDotIndex);
+                if (rv < 0 && lastDotIndex > 0)
+                {
+                    var noExt = name.Substring(0, lastDotIndex);
+                    lastDotIndex = noExt.LastIndexOf('.');
+
+                    return HasHashBeforeIndex(noExt, lastDotIndex);
+                }
+
+                return rv;
+            }
+
+            static int HasHashBeforeIndex(string name, int lastDotIndex)
+            {
+                if (lastDotIndex <= 0 || lastDotIndex < 11)
+                    return -1;
+
+                var hashStartIndex = lastDotIndex - 10;
+                if (name[hashStartIndex - 1] != '.')
+                    return -1;
+
+                var hashPart = name.Substring(hashStartIndex, 10);
+                return hashRegex.IsMatch(hashPart) ? lastDotIndex : -1;
+            }
+
+            var lastDotIndex = GetHashDotIndex(name);
+            if (lastDotIndex > 0)
+            {
+                var hashLength = 10;
+                var hashStartIndex = lastDotIndex - hashLength;
+                if (hashStartIndex > 0 && name[hashStartIndex - 1] == '.')
+                {
+                    var hashPart = name.Substring(hashStartIndex, hashLength);
+                    if (hashRegex.IsMatch(hashPart))
+                    {
+                        return name.Remove(hashStartIndex - 1, hashLength + 1);
+                    }
+                }
+            }
+
+            return name;
+        }
+
         static void TryAddSizeOfFile(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap, string basePath = "")
         {
-            var combined = Path.Combine(path, name);
+            var combined = Path.Combine(path, GetNameForKey(name));
             if (File.Exists(combined))
             {
                 var key = $"Size, {basePath}/{name}";
@@ -169,7 +223,7 @@ namespace WasmBenchmarkResults
             return sizes;
         }
 
-        static void AddSizeOfDirectory(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap, string basePath="")
+        static void AddSizeOfDirectory(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap, string basePath = "")
         {
             if (!Directory.Exists(path))
                 return;
@@ -207,6 +261,46 @@ namespace WasmBenchmarkResults
             }
 
             return size;
+        }
+
+        (IdMap, Dictionary<int,int>) FixMeasurementMap()
+        {
+            var newMeasurementMap = new IdMap();
+            var newOldMap = new Dictionary<int, int>();
+            foreach (var key in MeasurementMap.Keys)
+            {
+                var newKey = GetNameForKey(key);
+                newOldMap[MeasurementMap[key]] = newMeasurementMap[newKey];
+            }
+
+            return (newMeasurementMap, newOldMap);
+        }
+
+        Dictionary<int, long> FixSizeKeys(Dictionary<int, long> sizes, IdMap newMeasurementMap, Dictionary<int, int> newOldMap)
+        {
+            var newSizes = new Dictionary<int, long>();
+            foreach (var pair in sizes)
+            {
+                if (newOldMap.TryGetValue(pair.Key, out var newKey))
+                    newSizes[newKey] = pair.Value;
+                else
+                    System.Console.WriteLine($"Warning: size key {pair.Key} not found in new map, keeping old value {pair.Value}");
+            }
+
+            return newSizes;
+        }
+
+        internal void FixSizes()
+        {
+            (var newMeasurementMap, var newOldMap) = FixMeasurementMap();
+            if (Program.Verbose)
+                System.Console.WriteLine($"Fixing sizes, old map: {MeasurementMap.Count} new map: {newMeasurementMap.Count}");
+
+            foreach (var item in Data)
+            {
+                if (item.sizes != null)
+                    item.sizes = FixSizeKeys(item.sizes, newMeasurementMap, newOldMap);
+            }
         }
     }
 }

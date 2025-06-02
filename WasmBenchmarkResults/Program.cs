@@ -11,6 +11,8 @@ namespace WasmBenchmarkResults
         HashSet<string> flavors = new();
         static string? AddPath = null;
         static bool AddCSV = false;
+        static bool FixSizesWithHash = false;
+        static string FixSizesPath;
         static string IndexPath = "measurements/index.zip";
         readonly string IndexJsonFilename = "index.json";
         public static bool Verbose = false;
@@ -24,8 +26,21 @@ namespace WasmBenchmarkResults
             return 0;
         }
 
+        void FixSizes()
+        {
+            var index = LoadIndex();
+            index.FixSizes();
+            SaveIndex(index, "index.fixed.zip");
+        }
+
         void Run()
         {
+            if (FixSizesWithHash)
+            {
+                FixSizes();
+                return;
+            }
+
             if (AddPath != null)
             {
                 var index = LoadIndex();
@@ -67,6 +82,9 @@ namespace WasmBenchmarkResults
 
         void SaveIndex(Index index, string path)
         {
+            if (Verbose)
+                System.Console.WriteLine($"Saving index: {path}");
+
             var options = new JsonSerializerOptions { IncludeFields = true };
             var json = JsonSerializer.Serialize<Index>(index, options);
             SaveJsonInZip(json, path);
@@ -74,7 +92,10 @@ namespace WasmBenchmarkResults
 
         void SaveJsonInZip(string json, string path)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            var directory = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+
             using var fileStream = new FileStream(path, FileMode.Create);
             using var archive = new ZipArchive(fileStream, ZipArchiveMode.Create);
             var entry = archive.CreateEntry(IndexJsonFilename);
@@ -116,7 +137,7 @@ namespace WasmBenchmarkResults
             return JsonSerializer.Deserialize<Index>(stream, options);
         }
 
-        readonly string[] Builds = { "aot", "interp" };
+        readonly string[] Builds = { "aot", "interp", "nativeaot" };
         readonly string[] Configs = { "default", "threads", "simd", "wasm-eh", "simd+wasm-eh", "legacy", "hybrid-globalization", "nosimd" };
         readonly string[] Envs = { "chrome", "firefox", "v8", "node" };
 
@@ -259,6 +280,9 @@ namespace WasmBenchmarkResults
                 { "i|index-path=",
                     "Specify index {PATH}, measurements/index.zip is the default value",
                     v => IndexPath = v },
+                { "f|fix-sizes=",
+                    "Fix sizes in the index, replace ids with hashes",
+                    v => { FixSizesWithHash = true; FixSizesPath = v; } },
                 { "h|help|?",
                     "Show this message and exit",
                     v => help = v != null },
