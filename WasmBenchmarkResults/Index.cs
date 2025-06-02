@@ -185,10 +185,10 @@ namespace WasmBenchmarkResults
 
         static void TryAddSizeOfFile(string path, string name, Dictionary<int, long> sizes, IdMap measurementsMap, string basePath = "")
         {
-            var combined = Path.Combine(path, GetNameForKey(name));
+            var combined = Path.Combine(path, name);
             if (File.Exists(combined))
             {
-                var key = $"Size, {basePath}/{name}";
+                var key = $"Size, {basePath}/{GetNameForKey(name)}";
                 sizes[measurementsMap[key]] = new FileInfo(combined).Length;
                 if (Program.Verbose)
                     Console.WriteLine($"  file path: {path} name: {name} size: {sizes[measurementsMap[key]]} key: {key}");
