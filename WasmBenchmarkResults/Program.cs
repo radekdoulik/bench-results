@@ -30,7 +30,7 @@ namespace WasmBenchmarkResults
         {
             var index = LoadIndex();
             index.FixSizes();
-            SaveIndex(index, "index.fixed.zip");
+            SaveIndex(index, FixSizesPath);
         }
 
         void Run()
